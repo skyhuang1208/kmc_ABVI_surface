@@ -1,0 +1,7 @@
+!!!!! recombination is no longer a special event. it is part of the jumps. so every jump check if recb happens and rate should be calculated accordingly !!!!!
+
+ABVI code but with a surface
+	add new species 4 as the "vacuum"
+	surface interactions
+		V moves outo surface creating vacuum
+		I moves outo surface leaving a new atom
