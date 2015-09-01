@@ -7,8 +7,6 @@
 #include "kmc_initial.h"
 #include "kmc_par.h"
 
-#define MAX_NNBR 20
-
 using namespace std;
 
 void class_initial::ltc_constructor(){
@@ -17,18 +15,29 @@ void class_initial::ltc_constructor(){
 	int   (*ptr_v2nbr)[3];
 			
 	// coordinate vectors of bravais lattices
-	double vbra_bcc[3][3]= {{-0.5,  0.5,  0.5}, { 0.5, -0.5,  0.5}, { 0.5,  0.5, -0.5}};
 		
-	// BCC: index vectors of negibhor atoms: 1st nearest
-	int v1nbr_bcc[8][3]= {{ 1,  0,  0}, { 0,  1,  0}, { 0,  0,  1}, { 1,  1,  1},
- 		              {-1,  0,  0}, { 0, -1,  0}, { 0,  0, -1}, {-1, -1, -1}};
-	int v2nbr_bcc[6][3]= {{ 0,  1,  1}, { 1,  0,  1}, { 1,  1,  0},
- 		              { 0, -1, -1}, {-1,  0, -1}, {-1, -1,  0}};
+	// BCC
+	double vbra_bcc[3][3]= {{-0.5,  0.5,  0.5}, { 0.5, -0.5,  0.5}, { 0.5,  0.5, -0.5}};
+	
+    int   v1nbr_bcc[8][3]= {{ 1,  0,  0}, { 0,  1,  0}, { 0,  0,  1}, { 1,  1,  1},
+                            {-1,  0,  0}, { 0, -1,  0}, { 0,  0, -1}, {-1, -1, -1}};
+	
+    int   v2nbr_bcc[6][3]= {{ 0,  1,  1}, { 1,  0,  1}, { 1,  1,  0},
+                            { 0, -1, -1}, {-1,  0, -1}, {-1, -1,  0}};
+	
+    // FCC
+	double vbra_fcc[3][3]= {{0.5, 0.5, 0}, {0.5, 0, 0.5}, {0, 0.5, 0.5}};
+
+	int   v1nbr_fcc[12][3]= {{ 1,  0,  0}, { 0,  1,  0}, { 0,  0,  1}, { 1, -1,  0}, { 1,  0, -1}, { 0,  1, -1},
+                             {-1,  0,  0}, { 0, -1,  0}, { 0,  0, -1}, {-1,  1,  0}, {-1,  0,  1}, { 0, -1,  1}};
+
+	int   v2nbr_fcc[6][3]=  {{ 1,  1, -1}, { 1, -1,  1}, {-1,  1,  1},
+                             {-1, -1,  1}, {-1,  1, -1}, { 1, -1, -1}};
 
 	// Choose ltc structure
 	if     (strcmp(type_ltc, "SC ")==0){}
-	else if(strcmp(type_ltc, "BCC")==0){ptr_vbra= vbra_bcc;	n1nbr=8; ptr_v1nbr= v1nbr_bcc; n2nbr=6; ptr_v2nbr= v2nbr_bcc;}
-	else if(strcmp(type_ltc, "FCC")==0){}
+	else if(strcmp(type_ltc, "BCC")==0){ptr_vbra= vbra_bcc;	n1nbr= 8; ptr_v1nbr= v1nbr_bcc; n2nbr= 6; ptr_v2nbr= v2nbr_bcc;}
+	else if(strcmp(type_ltc, "FCC")==0){ptr_vbra= vbra_fcc; n1nbr=12; ptr_v1nbr= v1nbr_fcc; n2nbr= 6; ptr_v2nbr= v2nbr_fcc;}
 	else if(strcmp(type_ltc, "HCP")==0){}
 	else	error(1, "(ltc_constructor) coldn't match the lattice type", type_ltc);
 			
@@ -40,54 +49,69 @@ void class_initial::ltc_constructor(){
 	for(int i=0; i<n1nbr; i ++){ // v1nbr
 		for(int j=0; j<3; j ++){
 			v1nbr[i][j]= (*(ptr_v1nbr+i))[j];
-			if(i>=n1nbr/2)
+			
+            if(i>=n1nbr/2)
 				if(v1nbr[i][j] != -v1nbr[i-n1nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
 		}
 	}
 	for(int i=0; i<n2nbr; i ++){ // v2nbr
 		for(int j=0; j<3; j ++){
 			v2nbr[i][j]= (*(ptr_v2nbr+i))[j];
-			if(i>=n2nbr/2)
+			
+            if(i>=n2nbr/2)
 				if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
 		}
 	}
 }
 
-void class_initial::init_states_array(int nVset, double compA){
-	// STATE 0: vacancy, 1: A atom, -1: B atom
+void class_initial::init_states_array(int nVset, double compA, int nMlayer){
+	// STATE 0: vacancy, 1: A atom, -1: B atom, 4: Vacuum
 
-	int putV; if(nVset!=0) putV= (nx*ny*nz)/nVset;
-	int Vcount= 0;
+    for(int i=0; i<nx; i ++){	
+	    for(int j=0; j<ny; j ++){	
+	        for(int k=0; k<nz; k ++){
+                if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4;
+		        else{
+			            double ran= ran_generator();
 
-	for(int i=0; i<nx*ny*nz; i++){	
-		if((nVset!=0) && (i%putV==0) && (Vcount<nVset)){
-			Vcount ++;
-			*(&states[0][0][0] + i)= 0;
-		}
-		else{
-			double ran= ran_generator();
+			            if(ran < compA)             states[i][j][k]= 1;
+			            else                        states[i][j][k]=-1;
+		        }
+    }}}
+	if(nVset>1)  error(1, "(init_states_array) nVset is larger than 1, need code modify", 1, nVset);
+    if(nVset==1) states[nx/2][ny/2][nz/2]= 0;
 
-			if(ran < compA) 	*(&states[0][0][0] + i)= +1;
-			else			*(&states[0][0][0] + i)= -1;
-		}
-	}
-
-	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0;
+	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0;
 	////////// CHECK //////////
-	for(int i=0; i<nx*ny*nz; i++){ 
-		if(*(&states[0][0][0]+i)==  0){
-			vcc temp_vcc;
-			list_vcc.push_back(temp_vcc);
-			list_vcc[nV].ltcp= i;
-			list_vcc[nV].ix= 0;
-			list_vcc[nV].iy= 0;
-			list_vcc[nV].iz= 0;
-							nV ++;
-		}
-		else if(*(&states[0][0][0]+i)== +1)	nA ++;
-		else if(*(&states[0][0][0]+i)== -1)	nB ++;
-		else error(1, "(init_states_array) a state type is unrecognizable", 1, *(&states[0][0][0]+i));
-	}
+	for(int i=0; i<nx; i ++){ 
+	    for(int j=0; j<ny; j ++){ 
+	        for(int k=0; k<nz; k ++){ 
+		        switch(states[i][j][k]){
+                    case  0:
+			            vcc temp_vcc;
+			            list_vcc.push_back(temp_vcc);
+			            list_vcc[nV].ltcp= i*ny*nz+j*nz+k;
+			            list_vcc[nV].ix= 0;
+			            list_vcc[nV].iy= 0;
+			            list_vcc[nV].iz= 0;
+                        nV ++; break;
+		            case  1:
+                        nA ++; break;
+                    case -1:
+                        nB ++; break;
+                    case  4:
+                        for(int a=0; a<n1nbr; a ++){ // mark srf atoms
+                            int x= pbc(i+v1nbr[a][0], nx);
+                            int y= pbc(j+v1nbr[a][1], ny);
+                            int z= pbc(k+v1nbr[a][2], nz);
+
+                            if(     states[i][j][k] == 0) error(1, "(init_states_array) vcc adjacent to vacuum");
+                            else if(states[i][j][k] != 4) srf[i][j][k]= true;
+                        } 
+                        nM ++; break;
+                    default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
+	            }
+    }}}
 	if(nV != nVset) error(1, "(init_states_array) The number of vacancies is not nVset", 2, nV, nVset);
 #define TOL 0.01
 	int nAtotal= nA + nB;
@@ -96,6 +120,7 @@ void class_initial::init_states_array(int nVset, double compA){
 	
 	cout << "The random solution configuration has been generated!" << endl;
 	cout << "Vacancy: " << nV << endl;
+    cout << "Vacuum:  " << nM << endl;
 	cout << "Atype A: " << nA << ", pct: " << 100* (double) nA/(nAtotal) << "%" << endl;
 	cout << "Atype B: " << nB << ", pct: " << 100* (double) nB/(nAtotal) << "%" << endl;
 }
@@ -119,7 +144,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
 	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0;
 	for(int index=0; index<nx*ny*nz; index ++){	
-		int type, i, j, k, ix, iy, iz, dir, head;
+		int type, i, j, k, is_srf, ix, iy, iz, dir, head;
 		if_re >> type >> i >> j >> k;
 		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
 	
@@ -135,8 +160,14 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
 			nV ++;
 		}
-		else if	( 1==type) nA ++;
-		else if	(-1==type) nB ++;
+        else if(1==type || -1==type){
+		    if_re >> is_srf;
+            *(&srf[0][0][0]+index)= is_srf;
+            
+            if( 1==type) nA ++;
+		    if(-1==type) nB ++;
+        }
+        else if ( 4==type) nM ++;
 		else{
 			if_re >> ix >> iy >> iz >> dir >> head;
 

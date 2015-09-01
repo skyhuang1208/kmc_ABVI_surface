@@ -33,6 +33,7 @@ class class_initial{
 				
 				his_sol= fopen(par_name_sol, "a");
 				his_def= fopen(par_name_def, "a");
+				his_srf= fopen(par_name_srf, "a");
 				out_engy= fopen(par_name_engy, "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
 			}
@@ -40,17 +41,20 @@ class class_initial{
 				cout << "START FROM a random configuration..." << endl;
 				ts_bg= 0; time_bg= 0;
 				
-				init_states_array(par_nV, par_compA);
+				init_states_array(par_nV, par_compA, par_nMlayer);
 				write_conf();
 				cout << "Output t0 conf files" << endl;
 				
 				his_sol= fopen(par_name_sol, "w");
 				his_def= fopen(par_name_def, "w");
+				his_srf= fopen(par_name_srf, "w");
 				out_engy= fopen(par_name_engy, "w");
-				cout << "Open " << par_name_sol << " & " << par_name_def << "with write mode" << endl;
+				cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
-			if(NULL==his_sol) error(2, "(class_events) the solute  history file was not opened!");
-			if(NULL==his_def) error(2, "(class_events) the vacancy history file was not opened!");
+			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
+			if(NULL==his_def)  error(2, "(class_events) the vacancy history file was not opened!");
+			if(NULL==his_srf)  error(2, "(class_events) the surface history file was not opened!");
+			if(NULL==out_engy) error(2, "(class_events) the          energy file was not opened!");
 		
 			sum_mag= 2*nAA + 1*nA -1*nB -2*nBB;
 
@@ -63,7 +67,7 @@ class class_initial{
 
 		// functions
 		void ltc_constructor();
-		void init_states_array(int nVset, double compA);
+		void init_states_array(int nVset, double compA, int nMlayer);
 		void read_restart(char name_restart[], long long int &ts_initial, double &time_initial);
 		void init_par();
 		void init_uncorrH();

@@ -37,8 +37,8 @@ double class_events::jump(){
 		acc_rate += rates[i]/sum_rates;
 	}
 	
-	if(nA+nB+nV+nAA+nBB+nAB != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB-nx*ny*nz); // check
-	if(2*nAA+nA-nB-2*nBB    != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
+	if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB-nx*ny*nz); // check
+	if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
 	return 1.0/sum_rates;
 }

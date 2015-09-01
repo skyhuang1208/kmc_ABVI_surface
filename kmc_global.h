@@ -32,6 +32,7 @@ extern bool marker[nx][ny][nz]; // mark V or M recb with I that calculated (insi
 // Files
 extern FILE * his_sol;		// history file of solute atoms
 extern FILE * his_def;		// history file of vacancies and interstitials: record every several steps
+extern FILE * his_srf;		// history file of surface atoms 
 extern FILE * out_engy;		// out file for energy calculations
 
 // Parameters for mechanisms
@@ -51,6 +52,7 @@ struct itl{ // information of an interstitial; can declare a vector to store all
 };
 extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
+extern vector <int> list_srf;   // A list passing srf-atom info from write_sol to _def
 
 extern long long int Vja[2], Ija[2];
 

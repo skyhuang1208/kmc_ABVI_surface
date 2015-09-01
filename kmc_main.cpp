@@ -45,7 +45,7 @@ int main(int nArg, char *Arg[]){
 
             if(totaltime >= (N_genr+1)*time_genr){
                 double adv_time= totaltime - N_genr*time_genr;
-                for(int i=0; i< (int) adv_time/time_genr; i ++){
+                for(int i=0; i< (int) (adv_time/time_genr); i ++){
                     N_genr ++;
                     events.genr();
 			    }
@@ -69,8 +69,8 @@ int main(int nArg, char *Arg[]){
 			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
 		
 		if(0==timestep%step_his){
-			write_hisdef();
- 			write_hissol();
+ 			write_hissol(); // write sol first to construct list_srf
+			write_hisdef(); // and then output his_srf here
 		}
 	}
 

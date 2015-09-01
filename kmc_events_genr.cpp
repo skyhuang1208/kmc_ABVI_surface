@@ -17,7 +17,7 @@ void class_events::genr(){
 	do{ // generating vcc position: not on ltc occupied by AA, AB, BB, surface atom, and ltcp[0]
 		ran= ran_generator();
 		ltcp[1]= (int) (ran*nx*ny*nz);
-	}while( (*(&states[0][0][0]+ltcp[0]) !=-1 && *(&states[0][0][0]+ltcp[0]) !=1) || *(&srf[0][0][0]+ltcp[0]) || ltcp[1]==ltcp[0]);
+	}while( (*(&states[0][0][0]+ltcp[1]) !=-1 && *(&states[0][0][0]+ltcp[1]) !=1) || *(&srf[0][0][0]+ltcp[1]) || ltcp[0]==ltcp[1]);
 
 	int iid= list_itl.size();
 	int vid= list_vcc.size();
@@ -47,12 +47,12 @@ void class_events::genr(){
 	switch(*(&states[0][0][0]+ltcp[0])){
 		case  1: nA --; break;
 		case -1: nB --; break;
-			 // sol hash?
+		default: error(2, "(genr) an unknown atom type", 1, *(&states[0][0][0]+ltcp[0]));
 	}
 	switch(*(&states[0][0][0]+ltcp[1])){
 		case  1: nA --; break;
 		case -1: nB --; break;
-			 // sol hash?
+		default: error(2, "(genr) an unknown atom type", 1, *(&states[0][0][0]+ltcp[1]));
 	}
 	
 	// Update states
@@ -65,6 +65,7 @@ void class_events::genr(){
 		case  2: nAA ++; break;
 		case  0: nAB ++; break;
 		case -2: nBB ++; break;
+		default: error(2, "(genr) an unknown itl type", 1, *(&states[0][0][0]+ltcp[0]));
 	}
 	nV ++;
 
@@ -96,18 +97,22 @@ void class_events::genr_1strecb(int iid, int vid){
         if(states[x2][y2][z2]== 2 || states[x2][y2][z2]==-2 || itlAB[x2][y2][z2]) list_rec2.push_back(x2*ny*nz+y2*nz+z2);
     }
 
+    bool has_recb= false;
     if(list_rec1.size() != 0){
 		double ran= ran_generator();
 		int vltcp_recb= list_rec1[(int) (ran*list_rec1.size())];
         
         for(int i= 0; i<list_vcc.size(); i ++){ // brutal search for the vcc in the list
-    		if(vltcp_recb==list_vcc[i].ltcp){
+    		if(vltcp_recb==list_vcc[vid].ltcp) has_recb= true;
+
+            if(vltcp_recb==list_vcc[i].ltcp){
                 rules_recb(false, iid, i);
                 break;
             }
         }
 	}
-    if(list_rec2.size() != 0){
+
+    if(list_rec2.size() != 0 && ! has_recb){
 		double ran= ran_generator();
 		int iltcp_recb= list_rec2[(int) (ran*list_rec2.size())];
         

@@ -3,15 +3,16 @@
 
 const char   par_ltc[4]=		"BCC";
 
-const int    par_nx=                      256;
+const int    par_nx=                      276;
 const int    par_ny=                       64;
 const int    par_nz=                       64;
+const int    par_nMlayer=                  10;
 
 const double par_compA=                  0.95; // composition of A atoms
 const int    par_nV=                        0;
 
 const double	    par_time=            2e06; 	// toal time (s)
-const long long int par_step=            3e10; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const long long int par_step=            3e07; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
 
 const long long int step_log=	          5e4; 
 const long long int step_conf=   par_step/5e0;	// timestep that output a conf file for restart later
@@ -23,11 +24,12 @@ const bool par_isrestart=		    false;
 
 const char   par_name_sol[20]=      "history.sol";
 const char   par_name_def[20]=      "history.def";
+const char   par_name_srf[20]=      "history.srf";
 const char   par_name_engy[20]=      "out.energy";
 
 // Parameters for events
 const double par_dis_rec=0.866*3; // recombination distance
-const double par_dpasm1=    1e-6; 
+const double par_dpasm1=    1e-1; 
 
 // Ising model energy calculation parameters
 const double par_temp=                       800.0;

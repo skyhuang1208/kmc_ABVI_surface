@@ -28,10 +28,12 @@ bool marker[nx][ny][nz]= {false}; // mark V or M recb with I that calculated (in
 
 FILE * his_sol;		// history file of solute atoms
 FILE * his_def;		// history file of defects
+FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
+vector <int> list_srf;   // A list passing srf-atom info from write_sol to _def
 
 long long int Vja[2]= {0};
 long long int Ija[2]= {0};
@@ -141,24 +143,28 @@ void write_conf(){
 			
 				if(-1==states[i][j][k] || 1==states[i][j][k]){
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
-					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << endl;
-				}
+					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " ";
+				    if(srf[i][j][k]) of_ltcp << "1" << endl;
+                    else             of_ltcp << "0" << endl;
+                }
 				else if (0==states[i][j][k] && (! itlAB[i][j][k])){
 					int id; for(id=0; list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
 					
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " "
-						<< list_vcc[id].ix << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
+					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
+
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " " 
 						<< list_vcc[id].ix << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
+				}
+                else if(4==states[i][j][k]){
+					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
+					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << endl;
 				}
 				else{
 					int id; for(id=0; list_itl[id].ltcp != i*ny*nz+j*nz+k; id ++);
 
 					int type= states[i][j][k];
 					if(0==type) type= 3;
-					of_xyz  << type << " " << x << " " << y << " " << z << " " 
-						<< list_itl[id].ix << " " << list_itl[id].iy << " " << list_itl[id].iz << " "
-						<< list_itl[id].dir << " " << list_itl[id].head << endl;
+					of_xyz  << type << " " << x << " " << y << " " << z << " " << endl; 
 					of_ltcp << type << " " << i << " " << j << " " << k << " "
 						<< list_itl[id].ix << " " << list_itl[id].iy << " " << list_itl[id].iz << " "
 						<< list_itl[id].dir << " " << list_itl[id].head << endl;
@@ -171,6 +177,7 @@ void write_conf(){
 
 void write_hissol(){
 	int ncheck= 0;
+    list_srf.clear(); // store info in list and output in write_hisdef
 
 	fprintf(his_sol, "%d\n", nB);
 	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
@@ -179,6 +186,10 @@ void write_hissol(){
 			ncheck ++;
 			fprintf(his_sol, "%d\n", i);
 		}
+
+		if(*(&srf[0][0][0]+i) ){ // because # of srf atom is unknown
+		    list_srf.push_back(i);
+        }
 	}
 
 	if(ncheck != nB) error(0, "(write_hissol) nB inconsistent", 2, ncheck, nB); // delete it
@@ -186,15 +197,26 @@ void write_hissol(){
 
 
 void write_hisdef(){
-	fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
+	// OUTPUT his_def
+    fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
 	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
-	for(int i=0; i<list_vcc.size(); i++){
+    
+    for(int i=0; i<list_vcc.size(); i++){
 		fprintf(his_def, "0 %d %d %d %d\n", list_vcc[i].ltcp, list_vcc[i].ix, list_vcc[i].iy, list_vcc[i].iz);
 	}
 	for(int i=0; i<list_itl.size(); i++){
 		int type= *(&states[0][0][0]+list_itl[i].ltcp);
 		if(0==type) type= 3;
 		fprintf(his_def, "%d %d %d %d %d\n", type, list_itl[i].ltcp, list_itl[i].ix, list_itl[i].iy, list_itl[i].iz);
+	}
+    
+    // OUTPUT his_srf
+	fprintf(his_srf, "%lu\n", list_srf.size());
+	fprintf(his_srf, "T: %lld %e\n", timestep, totaltime);
+    
+    for(int i=0; i<list_srf.size(); i++){
+		int ltcp= list_srf[i];
+		fprintf(his_srf, "%d %d %d %d\n", *(&states[0][0][0]+ltcp), (int) (ltcp/nz)/ny, (int) (ltcp/nz)%ny, (int) ltcp%nz);
 	}
 }
 
