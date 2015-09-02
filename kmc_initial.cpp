@@ -105,8 +105,8 @@ void class_initial::init_states_array(int nVset, double compA, int nMlayer){
                             int y= pbc(j+v1nbr[a][1], ny);
                             int z= pbc(k+v1nbr[a][2], nz);
 
-                            if(     states[i][j][k] == 0) error(1, "(init_states_array) vcc adjacent to vacuum");
-                            else if(states[i][j][k] != 4) srf[i][j][k]= true;
+                            if(     states[x][y][z] == 0) error(1, "(init_states_array) vcc adjacent to vacuum");
+                            else if(states[x][y][z] != 4) srf[x][y][z]= true;
                         } 
                         nM ++; break;
                     default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
@@ -326,6 +326,7 @@ void class_initial::init_par(){
 	printf("Vacancy Em= %f %f\n", emvA, emvB);
 	printf("Interstitial Em= %f %f\n", emiA, emiB);
 	printf("Rotation Er(AA, AB, BB)= %f %f %f\n", erAA, erAB, erBB);
+	printf("Interstitial Em(AA AB BB)= %f %f %f (Dubey, CMS 2015)\n", emiAA, emiAB, emiBB);
 	
 	cout << "\n##### Input epsilons: #####" << endl;
 	cout << "(1st neigbor)" << endl;

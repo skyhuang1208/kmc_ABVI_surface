@@ -70,6 +70,10 @@ const double emvB= par_emvB;
 const double emiA= par_emiA;
 const double emiB= par_emiB;
 
+const double emiAA= par_emiAA; // !!! only for DubeyCMS2015
+const double emiAB= par_emiAB; // !!!
+const double emiBB= par_emiBB; // !!!
+
 const double erAA= par_erAA; // rotation energy barrier
 const double erAB= par_erAB;
 const double erBB= par_erBB;

@@ -27,8 +27,17 @@ double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, ve
             vector< vector <int> > rlist(3); // collect xyz to recover marker
             
             double em, mu;
-		    if(1==ja) { em= emiA; mu= muiA;} // WARNING! the dir move (AB atoms move in 2 ways) and rot move removed
-		    else	  { em= emiB; mu= muiB;}
+//		    if(1==ja) { em= emiA; mu= muiA;} // WARNING! the dir move (AB atoms move in 2 ways) and rot move removed
+//		    else	  { em= emiB; mu= muiB;}
+		    
+            if(1==ja) mu= muiA; // !!! only for Dubey, CMS 2015 !!!
+            else	  mu= muiB; // !!!
+            switch(stateI){     // !!!
+                case  2: em= emiAA; break;
+                case  0: em= emiAB; break;
+                case -2: em= emiBB; break;
+                default: error(2, "(cal_ratesI) an unknown itl type", 1, stateI);
+            }                   // !!!
 
 		    for(int a=0; a<n1nbr; a ++){
 			    int x= pbc(i+v1nbr[a][0], nx);
@@ -68,7 +77,7 @@ double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, ve
 		            states[xb][yb][zb]  = stateB;
                     if(0==stateI) itlAB[i][j][k]= true;
 				
-                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB can jump via A atom or B atom. So itlAB has 2 jumps, and hence divided by 2 here 
+                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB has 2 jumps(A, B), and hence divided by 2 here 
                     else          rates.push_back(      mu * exp(-beta*(em+0.5*ediff)));
 
        			    isvcc.push_back(false);

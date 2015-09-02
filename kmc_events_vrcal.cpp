@@ -7,7 +7,7 @@ using namespace std;
 
 double class_events::cal_ratesV(vector <bool> &isvcc, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
 	double sum_rate= 0;
-	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent");
+	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent", 2, nV, list_vcc.size());
 	
 	for(int ivcc=0; ivcc < nV; ivcc ++){
 		int i= (int) (list_vcc[ivcc].ltcp/nz)/ny;
