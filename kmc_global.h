@@ -37,7 +37,7 @@ extern FILE * out_engy;		// out file for energy calculations
 
 // Parameters for mechanisms
 const double dis_rec= par_dis_rec;	// recombination distance
-const double time_genr= 1.0/(par_dpasm1*nx*ny*nz);
+const double time_genr= 1.0/(par_dpasm1*(nx-2*par_nMlayer)*ny*nz);
 
 // Defect lists
 struct vcc{ // information of an vacancy
@@ -70,9 +70,13 @@ const double emvB= par_emvB;
 const double emiA= par_emiA;
 const double emiB= par_emiB;
 
-const double emiAA= par_emiAA; // !!! only for DubeyCMS2015
-const double emiAB= par_emiAB; // !!!
-const double emiBB= par_emiBB; // !!!
+const double emiAA= par_emiAA;       // !!! only for DubeyCMS2015
+const double emiAB= par_emiAB;       // !!!
+const double emiBB= par_emiBB;       // !!!
+const double eciAAtAB= par_eciAAtAB; // !!!
+const double eciABtAA= par_eciABtAA; // !!!
+const double eciABtBB= par_eciABtBB; // !!!
+const double eciBBtAB= par_eciBBtAB; // !!!
 
 const double erAA= par_erAA; // rotation energy barrier
 const double erAB= par_erAB;

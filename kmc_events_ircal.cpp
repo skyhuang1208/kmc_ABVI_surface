@@ -100,14 +100,28 @@ double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, ve
                     if(0==states[x][y][z]) itlAB[x][y][z]= true;
 			
                     double ediff= cal_energy(true, i, j, k, x, y, z) - e0;
+
+                    double ec;                      // !!! only for Dubey, CMS 2015 !!!
+                    switch(states[x][y][z]-stateI){ // !!!
+                        case  0: ec= 0; break;
+                        case  2:
+                                 if(0==stateI) ec= eciABtAA;
+                                 else          ec= eciBBtAB;
+                                 break;
+                        case -2:
+                                 if(0==stateI) ec= eciABtBB;
+                                 else          ec= eciAAtAB;
+                                 break;
+                        default: error(2, "(cal_ratesI) an unknown conversion type: (diff)", 1, states[x][y][z]-stateI);
+                    }                               // !!!
 			
                     states[i][j][k]  = stateI; //transit back
 		            states[x][y][z]  = stateA;
                     if(0==stateI)   itlAB[i][j][k]= true;
                                     itlAB[x][y][z]= false;
 			
-                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB can jump via A atom or B atom. So itlAB has 2 jumps, and hence divided by 2 here 
-                    else          rates.push_back(      mu * exp(-beta*(em+0.5*ediff)));
+                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(ec+em+0.5*ediff))); // itlAB has 2 jumps: via A or B. so divided by 2 here 
+                    else          rates.push_back(      mu * exp(-beta*(ec+em+0.5*ediff)));
 					
     			    isvcc.push_back(false);
    				    ilist.push_back(ii);

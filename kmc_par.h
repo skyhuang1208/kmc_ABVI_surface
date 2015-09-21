@@ -52,6 +52,10 @@ const double par_erBB=                   0;
 const double par_emiAA=			     0.300; // !!! these three para only for Dubey, CMS 2015
 const double par_emiAB=			     0.377; // !!! 
 const double par_emiBB=			     0.120; // !!!
+const double par_eciAAtAB=             0.3; // !!!
+const double par_eciABtAA=             0.5; // !!!
+const double par_eciABtBB=            0.32; // !!!
+const double par_eciBBtAB=            0.12; // !!!
 
 // bonding energy parameters
 
