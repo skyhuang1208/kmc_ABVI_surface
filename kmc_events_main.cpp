@@ -22,30 +22,53 @@ double class_events::main(){
 	double vrates= cal_ratesV(etype, rates, ilist, nltcp, jatom);
     etype.push_back(7); rates.push_back(rate_genr); // the genr event
 
+    if(etype.size() != rates.size()) error(2, "diff", 2, etype.size(), rates.size());
+
 	double sum_rates= vrates + irates + rate_genr; // sum of all rates
 	double ran= ran_generator();
 	double acc_rate= 0; // accumulated rate
 
     // perform the actual jump
+    vector <int> list_inf; // a list of all inf events that have lowest energy einf
 	for(int i=0; i<rates.size(); i ++){
-        if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
-		    switch(etype[i]){
-                case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
-			    case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
-                case 7:  genr(); N_genr ++; break;
-                default: error(2, "(main) an unknown event type", 1, etype[i]);
+        if(is_inf){
+            if(rates[i]<= einf) list_inf.push_back(i); // store events with einf for later use 
+        }
+        else{
+            if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
+		        switch(etype[i]){
+                    case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
+			        case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
+                    case 7:  genr(); N_genr ++; break;
+                    default: error(2, "(main) an unknown event type", 1, etype[i]);
+                }
+	
+                if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz); // check
+	            if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
+
+	            return 1.0/sum_rates;
+		
             }
 		
-            break;
+		    acc_rate += rates[i]/sum_rates;
         }
-		
-		acc_rate += rates[i]/sum_rates;
 	}
-	
-	if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz); // check
-	if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
-	return 1.0/sum_rates;
+    if(is_inf){
+        if(0==list_inf.size()) error(2, "(main) no inf event is collected but is_inf= true");
+
+        int j= list_inf[(int) (ran*list_inf.size())]; // the randomly picked inf event that will be performed
+        switch(etype[j]){
+            case 0:  actual_jumpI(ilist[j], nltcp[j], jatom[j]); break;
+			case 1:  actual_jumpV(ilist[j], nltcp[j], jatom[j]); break;
+            default: error(2, "(main) an unknown event type in inf events", 1, etype[j]);
+        }
+        is_inf= false;
+        einf= 0;
+
+        return 0;
+    }
+    else error(2, "(main) can't find finite event");
 }
 
 void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neighbor ltcp and jumping atom

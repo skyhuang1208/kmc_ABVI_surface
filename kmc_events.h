@@ -11,13 +11,20 @@ class class_events{
 		class_events(){
 			cout << "##Generation parameters (rate_genr) " << rate_genr << " (damage/s)" << endl;
 			cout << "##Recombination parameters: 2nd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
-		}
+		
+            is_inf= false;
+            einf= 0;
+        }
 		
 		// functions
 		double main();
 		double ecal_whole() const; 
 	
 	private:
+        // infinite event //
+        bool is_inf;
+        double einf;
+
 		////// functions of energy calculation //////
 		double cal_energy(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
 		int powc(int base, int index) const;

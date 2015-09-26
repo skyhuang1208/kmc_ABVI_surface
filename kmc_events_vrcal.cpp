@@ -43,8 +43,14 @@ double class_events::cal_ratesV(vector <int> &etype, vector <double> &rates, vec
 
 				states[x][y][z]= states[i][j][k];
 				states[i][j][k]= 0;
-				
-				rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
+			
+                if((em+0.5*ediff)<0){
+                    double e= em+0.5*ediff;
+                    rates.push_back(e);
+                    is_inf= true;
+                    if(e<einf) einf= e;
+                }
+                else rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
 							
 				etype.push_back(1);
 				ilist.push_back(ivcc);

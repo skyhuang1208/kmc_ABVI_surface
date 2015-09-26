@@ -76,9 +76,15 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                     states[i][j][k]     = stateI; //transit back
 		            states[xb][yb][zb]  = stateB;
                     if(0==stateI) itlAB[i][j][k]= true;
-				
-                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB has 2 jumps(A, B), and hence divided by 2 here 
-                    else          rates.push_back(      mu * exp(-beta*(em+0.5*ediff)));
+			
+                    if((em+0.5*ediff)<0){
+                        double e= em+0.5*ediff;
+                        rates.push_back(e);
+                        is_inf= true;
+                        if(e<einf) einf= e;
+                    }
+                    else if(0==stateI)   rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB has 2 jumps(A, B), and hence divided by 2 here 
+                    else                 rates.push_back(      mu * exp(-beta*(em+0.5*ediff)));
 
        			    etype.push_back(0);
    				    ilist.push_back(ii);
@@ -120,8 +126,14 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                     if(0==stateI)   itlAB[i][j][k]= true;
                                     itlAB[x][y][z]= false;
 			
-                    if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(ec+em+0.5*ediff))); // itlAB has 2 jumps: via A or B. so divided by 2 here 
-                    else          rates.push_back(      mu * exp(-beta*(ec+em+0.5*ediff)));
+                    if((ec+em+0.5*ediff)<0){
+                        double e= ec+em+0.5*ediff;
+                        rates.push_back(e);
+                        is_inf= true;
+                        if(e<einf) einf= e;
+                    }
+                    else if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(ec+em+0.5*ediff))); // itlAB has 2 jumps: via A or B. so divided by 2 here 
+                    else               rates.push_back(      mu * exp(-beta*(ec+em+0.5*ediff)));
 					
     			    etype.push_back(0);
    				    ilist.push_back(ii);
