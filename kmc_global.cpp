@@ -35,6 +35,7 @@ vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
 vector <int> list_srf;   // A list passing srf-atom info from write_sol to _def
 
+int N_genr= 0;
 long long int Vja[2]= {0};
 long long int Ija[2]= {0};
 

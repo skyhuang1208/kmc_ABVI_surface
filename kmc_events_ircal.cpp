@@ -6,7 +6,7 @@
 
 using namespace std;
 
-double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
+double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
 	double sum_rate= 0;
 	if(nAA + nAB + nBB != list_itl.size()) error(2, "(cal_ratesI) itl number inconsistent");
 	
@@ -80,7 +80,7 @@ double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, ve
                     if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB has 2 jumps(A, B), and hence divided by 2 here 
                     else          rates.push_back(      mu * exp(-beta*(em+0.5*ediff)));
 
-       			    isvcc.push_back(false);
+       			    etype.push_back(0);
    				    ilist.push_back(ii);
     			    nltcp.push_back(xb*ny*nz+yb*nz+zb);
     			    jatom.push_back(ja);
@@ -123,7 +123,7 @@ double class_events::cal_ratesI(vector <bool> &isvcc, vector <double> &rates, ve
                     if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(ec+em+0.5*ediff))); // itlAB has 2 jumps: via A or B. so divided by 2 here 
                     else          rates.push_back(      mu * exp(-beta*(ec+em+0.5*ediff)));
 					
-    			    isvcc.push_back(false);
+    			    etype.push_back(0);
    				    ilist.push_back(ii);
     			    nltcp.push_back(x*ny*nz+y*nz+z);
     			    jatom.push_back(ja);

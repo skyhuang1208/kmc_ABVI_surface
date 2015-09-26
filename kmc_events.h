@@ -9,13 +9,12 @@ using namespace std;
 class class_events{
 	public:
 		class_events(){
-			cout << "##Generation parameters: (dpa/s) " << 1.0/time_genr/nx/ny/nz << ", (time period)" << time_genr << endl;
+			cout << "##Generation parameters (rate_genr) " << rate_genr << " (damage/s)" << endl;
 			cout << "##Recombination parameters: 2nd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
 		}
 		
 		// functions
-		void genr();
-		double jump();
+		double main();
 		double ecal_whole() const; 
 	
 	private:
@@ -26,9 +25,12 @@ class class_events{
 		double ecal_bond(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
 		double ecal_otf (bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; // corrected H on the fly 
 
-		////// functions for jumps(jumping rate calculations) //////
-		double cal_ratesV(vector <bool> &isvcc, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
-		double cal_ratesI(vector <bool> &isvcc, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+		////// functions for generation //////
+		void genr();
+		
+        ////// functions for jumps(jumping rate calculations) //////
+		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+		double cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
         void actual_jumpV(int vid, int nltcp, int jatom);
 		void actual_jumpV(int vid, int nltcp);
 		void actual_jumpI(int iid, int nltcp, int jatom);

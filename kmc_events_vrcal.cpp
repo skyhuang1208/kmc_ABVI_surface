@@ -5,7 +5,7 @@
 
 using namespace std;
 
-double class_events::cal_ratesV(vector <bool> &isvcc, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
+double class_events::cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
 	double sum_rate= 0;
 	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent", 2, nV, list_vcc.size());
 	
@@ -46,7 +46,7 @@ double class_events::cal_ratesV(vector <bool> &isvcc, vector <double> &rates, ve
 				
 				rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
 							
-				isvcc.push_back(true);
+				etype.push_back(1);
 				ilist.push_back(ivcc);
 				nltcp.push_back(x*ny*nz+y*nz+z);
 				jatom.push_back(states[x][y][z]);
