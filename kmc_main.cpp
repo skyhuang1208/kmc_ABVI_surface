@@ -46,7 +46,7 @@ int main(int nArg, char *Arg[]){
 		if(0==timestep%step_conf || totaltime>=(N_conf+1)*time_conf){
 			write_conf(); 
             cout << "   <Output conf files at: " << timestep << ">";
-            N_conf= (int) totaltime / time_conf;
+            N_conf= (int) (totaltime / time_conf);
         }
 
 		if(0==timestep%step_out)
