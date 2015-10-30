@@ -11,7 +11,7 @@ double class_events::main(){
 	// then randomly picked the ACTUAL move based on the probability map
 
 	// defect information
-	vector <int>    etype; // type of the event: 0: ITL JUMP; 1: VCC JUMP; 7: F-P GENR
+	vector <int>    etype; // type of the event: 0: ITL JUMP; 1: VCC JUMP; 7: F-P GENR; 8: VCC CRTN
 	vector <double> rates; // transition rates
 	vector <int>    ilist; // IDs in the lists
 	vector <int>    nltcp; // ltcp of neighbors
@@ -20,11 +20,12 @@ double class_events::main(){
 	// perform imaginary jumps and cal rates
 	double irates= cal_ratesI(etype, rates, ilist, nltcp, jatom); // WARNING: irates before vrates so the recb map can be generated
 	double vrates= cal_ratesV(etype, rates, ilist, nltcp, jatom);
+	double crates= cal_ratesC(etype, rates, ilist, nltcp, jatom);
     etype.push_back(7); rates.push_back(rate_genr); // the genr event
 
-    if(etype.size() != rates.size()) error(2, "diff", 2, etype.size(), rates.size());
+    if(etype.size() != rates.size()) error(2, "diff", 2, etype.size(), rates.size()); // !!!!!!!!!! DETETE IT !!!!!!!!!!
 
-	double sum_rates= vrates + irates + rate_genr; // sum of all rates
+	double sum_rates= vrates + irates + crates + rate_genr; // sum of all rates
 	double ran= ran_generator();
 	double acc_rate= 0; // accumulated rate
 
@@ -40,6 +41,7 @@ double class_events::main(){
                     case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
 			        case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
                     case 7:  genr(); N_genr ++; break;
+                    case 8:  create_vcc  (ilist[i], nltcp[i]); break;
                     default: error(2, "(main) an unknown event type", 1, etype[i]);
                 }
 	
@@ -117,8 +119,10 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
 	int y= (int) (nltcp/nz)%ny;
 	int z= (int)  nltcp%nz;
 	
-    if(4==states[x][y][z])
-                rules_recb(true,  iid, nltcp, jatom);
+    if(4==states[x][y][z]){
+        if(! is_inf) error(2, "(actual_jumpI) an itl to srf jump isnt instant event");        
+        rules_recb(true,  iid, nltcp, jatom);
+    }
     else if(0==states[x][y][z]){
         for(int i= 0; i<list_vcc.size(); i ++){ // brutal search for the vcc in the list
     		if(nltcp==list_vcc[i].ltcp){
@@ -168,6 +172,32 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
     }
 }
 	
+void class_events::create_vcc(int altcp, int mltcp){
+	int ja= *(&states[0][0][0]+altcp);
+    if(ja != 1 && ja != -1) error(2, "(create_vcc) an ja isnt 1 or -1", 1, ja);
+
+    // initialize the vcc in the list_vcc
+	int vid= list_vcc.size();
+	vcc temp_vcc;
+	list_vcc.push_back(temp_vcc);
+	
+	list_vcc[vid].ltcp= altcp;
+	list_vcc[vid].ix= 0;
+	list_vcc[vid].iy= 0;
+	list_vcc[vid].iz= 0;
+
+	// Update states
+	*(&states[0][0][0]+mltcp)= ja;
+	*(&states[0][0][0]+altcp)= 0;
+	   *(&srf[0][0][0]+mltcp)= true;
+	   *(&srf[0][0][0]+altcp)= false;
+
+    nV ++;
+    nM --;
+
+    
+}
+
 // functions in backupfun:
 //	int vpos[3];
 //	events.vac_jump_random(par_pr_vjump, vpos);

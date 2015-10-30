@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <unordered_map>
 
 using namespace std;
 
@@ -25,25 +26,34 @@ class class_events{
         bool is_inf;
         double einf;
 
-		////// functions of energy calculation //////
+        // vcc creation at surface //
+        struct rates_info{
+            vector <double> rates;
+            vector <int> altcp;
+            vector <int> mltcp;
+        };
+        unordered_map <int, struct rates_info> rates_cvcc;
+
+		///// functions of energy calculation /////
 		double cal_energy(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
 		int powc(int base, int index) const;
 		double cal_c00(int type[], int ABA1, int ABB1, int ABA2, int ABB2) const;
 		double ecal_bond(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
 		double ecal_otf (bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; // corrected H on the fly 
 
-		////// functions for generation //////
-		void genr();
-		
-        ////// functions for jumps(jumping rate calculations) //////
-		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
-		double cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
-        void actual_jumpV(int vid, int nltcp, int jatom);
-		void actual_jumpV(int vid, int nltcp);
+		///// functions of events /////
 		void actual_jumpI(int iid, int nltcp, int jatom);
-	
-		///// functions for recombination /////
+        void actual_jumpV(int vid, int nltcp, int jatom);
+		void genr();
+        void create_vcc  (int altcp, int mltcp);
+		
+		///// functions for generation /////
         void genr_1strecb(int iid, int vid);
+        
+        ///// functions for rate calculations) /////
+		double cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+        double cal_ratesC(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
 		
         ///// functions for recombination /////
         void rules_recb(bool is_vcm, int ii, int iv, int ja= 0);

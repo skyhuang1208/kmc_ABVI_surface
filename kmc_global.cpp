@@ -33,7 +33,6 @@ FILE * out_engy;	// out file of energy calculations
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
-vector <int> list_srf;   // A list passing srf-atom info from write_sol to _def
 
 int N_genr= 0;
 long long int Vja[2]= {0};
@@ -178,8 +177,9 @@ void write_conf(){
 
 void write_hissol(){
 	int ncheck= 0;
-    list_srf.clear(); // store info in list and output in write_hisdef
+    vector <int> list_srf; // A list store srf info
 
+    // OUTPUT his_sol
 	fprintf(his_sol, "%d\n", nB);
 	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
 	for(int i=0; i<nx*ny*nz; i++){
@@ -191,6 +191,15 @@ void write_hissol(){
 		if(*(&srf[0][0][0]+i) ){ // because # of srf atom is unknown
 		    list_srf.push_back(i);
         }
+	}
+    
+    // OUTPUT his_srf
+	fprintf(his_srf, "%lu\n", list_srf.size());
+	fprintf(his_srf, "T: %lld %e\n", timestep, totaltime);
+    
+    for(int i=0; i<list_srf.size(); i++){
+		int ltcp= list_srf[i];
+		fprintf(his_srf, "%d %d %d %d\n", *(&states[0][0][0]+ltcp), (int) (ltcp/nz)/ny, (int) (ltcp/nz)%ny, (int) ltcp%nz);
 	}
 
 	if(ncheck != nB) error(0, "(write_hissol) nB inconsistent", 2, ncheck, nB); // delete it
@@ -209,15 +218,6 @@ void write_hisdef(){
 		int type= *(&states[0][0][0]+list_itl[i].ltcp);
 		if(0==type) type= 3;
 		fprintf(his_def, "%d %d %d %d %d\n", type, list_itl[i].ltcp, list_itl[i].ix, list_itl[i].iy, list_itl[i].iz);
-	}
-    
-    // OUTPUT his_srf
-	fprintf(his_srf, "%lu\n", list_srf.size());
-	fprintf(his_srf, "T: %lld %e\n", timestep, totaltime);
-    
-    for(int i=0; i<list_srf.size(); i++){
-		int ltcp= list_srf[i];
-		fprintf(his_srf, "%d %d %d %d\n", *(&states[0][0][0]+ltcp), (int) (ltcp/nz)/ny, (int) (ltcp/nz)%ny, (int) ltcp%nz);
 	}
 }
 

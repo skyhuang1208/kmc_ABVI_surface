@@ -187,7 +187,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
 		*(&states[0][0][0]+index)= type;
 	}
-	if(nV+nA+nB+nAA+nBB+nAB != nx*ny*nz) error(1, "(read_restart) the number inconsistent", 2, nV+nA+nB+nAA+nBB+nAB, nx*ny*nz);
+	if(nV+nA+nB+nAA+nBB+nAB+nM != nx*ny*nz) error(1, "(read_restart) the number inconsistent", 2, nV+nA+nB+nAA+nBB+nAB+nM, nx*ny*nz);
 
 	cout << "The configuration has been generated from the restart file!" << endl;
 	cout << "Vacancy: " << nV << endl;

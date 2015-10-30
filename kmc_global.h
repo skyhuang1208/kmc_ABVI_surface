@@ -52,7 +52,6 @@ struct itl{ // information of an interstitial; can declare a vector to store all
 };
 extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
-extern vector <int> list_srf;   // A list passing srf-atom info from write_sol to _def
 
 extern int N_genr;
 extern long long int Vja[2], Ija[2];
