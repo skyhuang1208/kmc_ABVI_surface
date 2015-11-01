@@ -15,6 +15,8 @@ class class_events{
 		
             is_inf= false;
             einf= 0;
+        
+            crates= init_ratesC();
         }
 		
 		// functions
@@ -27,12 +29,16 @@ class class_events{
         double einf;
 
         // vcc creation at surface //
-        struct rates_info{
+        #define RATIO_NOCVCC 0.5
+        struct cvcc_info{
+            long long int step; // modified step
             vector <double> rates;
             vector <int> altcp;
             vector <int> mltcp;
         };
-        unordered_map <int, struct rates_info> rates_cvcc;
+        unordered_map <int, struct cvcc_info> cvcc;
+        double crates;
+        double init_ratesC();
 
 		///// functions of energy calculation /////
 		double cal_energy(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
@@ -53,6 +59,7 @@ class class_events{
         ///// functions for rate calculations) /////
 		double cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
 		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+        double update_ratesC(int ltcp_in); // update rates of vcc creation at srf
         double cal_ratesC(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
 		
         ///// functions for recombination /////

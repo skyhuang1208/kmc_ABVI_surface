@@ -14,7 +14,7 @@ const int    par_nV=                        0;
 const double	    par_time=            1e09; 	// toal time (s)
 const long long int par_step=            5e09; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
 
-const long long int step_log=	          1e5; 
+const long long int step_log=	          1e3; 
 const long long int step_conf=   par_step/5e0;	// timestep that output a conf file for restart later
 const long long int time_conf=   par_time/5e0;	//     time that output a conf file for restart later
 const long long int step_out=	 par_step/5e2; 

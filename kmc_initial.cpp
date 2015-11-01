@@ -88,8 +88,7 @@ void class_initial::init_states_array(int nVset, double compA, int nMlayer){
 	        for(int k=0; k<nz; k ++){ 
 		        switch(states[i][j][k]){
                     case  0:
-			            vcc temp_vcc;
-			            list_vcc.push_back(temp_vcc);
+			            list_vcc.push_back(vcc());
 			            list_vcc[nV].ltcp= i*ny*nz+j*nz+k;
 			            list_vcc[nV].ix= 0;
 			            list_vcc[nV].iy= 0;
@@ -151,8 +150,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		if( 0==type){
 			if_re >> ix >> iy >> iz;
 			
-			vcc temp_vcc;
-			list_vcc.push_back(temp_vcc);
+			list_vcc.push_back(vcc());
 			list_vcc[nV].ltcp= index;
 			list_vcc[nV].ix= ix;
 			list_vcc[nV].iy= iy;
@@ -171,8 +169,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		else{
 			if_re >> ix >> iy >> iz >> dir >> head;
 
-			itl temp_itl;
-			list_itl.push_back(temp_itl);
+			list_itl.push_back(itl());
 			list_itl[nAA+nAB+nBB].ltcp= index;
 			list_itl[nAA+nAB+nBB].ix= ix;
 			list_itl[nAA+nAB+nBB].iy= iy;

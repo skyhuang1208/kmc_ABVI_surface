@@ -23,8 +23,7 @@ void class_events::genr(){
 	int vid= list_vcc.size();
 
 	// initialize the itl in the list_itl
-	itl temp_itl;
-	list_itl.push_back(temp_itl);
+	list_itl.push_back(itl());
 	
 	list_itl[iid].ltcp= ltcp[0]; 
 	ran= ran_generator();
@@ -35,8 +34,7 @@ void class_events::genr(){
 	list_itl[iid].iz= 0; 
 
 	// initialize the vcc in the list_vcc
-	vcc temp_vcc;
-	list_vcc.push_back(temp_vcc);
+	list_vcc.push_back(vcc());
 	
 	list_vcc[vid].ltcp= ltcp[1];
 	list_vcc[vid].ix= 0;

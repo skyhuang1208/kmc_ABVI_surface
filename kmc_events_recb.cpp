@@ -56,10 +56,11 @@ void class_events::srf_check(int mltcp){ // when vacuum changed, check if srf ar
     int j= (int) (mltcp/nz)%ny;
     int k= (int)  mltcp%nz;
 
-    for(int a=0; a<n1nbr; a ++){ // here we check if some surface atoms become non-surface atoms (hv no bond with vacuum)
+    for(int a= 0; a<n1nbr; a ++){ // here we check if some surface atoms become non-surface atoms (hv no bond with vacuum)
         int x= pbc(i+v1nbr[a][0], nx);
         int y= pbc(j+v1nbr[a][1], ny);
         int z= pbc(k+v1nbr[a][2], nz);
+        
         if(states[x][y][z] != 1 && states[x][y][z] != -1) continue;
 
         bool is_srf= false;

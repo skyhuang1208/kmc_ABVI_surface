@@ -5,15 +5,40 @@
 
 using namespace std;
 
-double class_events::cal_ratesC(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom){
-	double sum_rate= 0;
-	
-	for(int a=0; a < nx*ny*nz; a ++){
-		if(*(&srf[0][0][0]+a)){
-            int i= (int) (a/nz)/ny;
-		    int j= (int) (a/nz)%ny;
-		    int k= (int)  a%nz;
+double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input and the 1st-nn of it; remove rate info of them and rebuilt it
+	double rate_change= 0;
 
+    int i0= (int) (ltcp_in/nz)/ny;
+    int j0= (int) (ltcp_in/nz)%ny;
+    int k0= (int)  ltcp_in%nz;
+
+	for(int a= -1; a<n1nbr; a ++){
+        int i, j, k, ltcp;
+        if(-1==a){ i= i0; j= j0; k= k0; ltcp= ltcp_in;}
+        else{
+	        i= pbc(i0+v1nbr[a][0], nx);
+	        j= pbc(j0+v1nbr[a][1], ny);
+	        k= pbc(k0+v1nbr[a][2], nz);
+    	    ltcp= i*ny*nz + j*nz + k;
+        }
+
+        if(1==cvcc.count(ltcp)){
+            if(cvcc[ltcp].step == timestep) continue; // if has been modified, skip it
+
+            for(int b=0; b<cvcc[ltcp].rates.size(); b ++) rate_change -= cvcc[ltcp].rates[b];
+                
+            if(*(&srf[0][0][0]+ltcp)){
+                cvcc[ltcp].rates.clear();
+                cvcc[ltcp].altcp.clear();
+                cvcc[ltcp].mltcp.clear();
+            }
+            else cvcc.erase(ltcp);
+        }
+        else if(*(&srf[0][0][0]+ltcp)) cvcc[ltcp]= cvcc_info(); 
+    
+        if(*(&srf[0][0][0]+ltcp)){
+            cvcc[ltcp].step= timestep;
+            
             double em, mu;
 			switch(states[i][j][k]){
                 case  1: em= emvA; mu= muvA; break; 
@@ -21,35 +46,48 @@ double class_events::cal_ratesC(vector <int> &etype, vector <double> &rates, vec
                 default: error(2, "(cal_ratesC) an srf atom isnt 1 or -1", 2, states[i][j][k], timestep);
             }
 
-		    for(int b=0; b<n1nbr; b ++){
-			    int x= pbc(i+v1nbr[b][0], nx);
-			    int y= pbc(j+v1nbr[b][1], ny);
-			    int z= pbc(k+v1nbr[b][2], nz);
+            int count= 0; // count how many A-M bonds. if count > n1nbr/2, erase it.
+            double rate_temp= 0; // unless count > n1nbr/2, rates_change += rate_temp
+	        for(int b= -1; b<n1nbr; b ++){
+	            int x= pbc(i+v1nbr[b][0], nx);
+	            int y= pbc(j+v1nbr[b][1], ny);
+	            int z= pbc(k+v1nbr[b][2], nz);
+    	        int ltcp2= x*ny*nz + y*nz + z;
 
-			    if(4==states[x][y][z]){
-				    double e0= cal_energy(false, i, j, k, x, y, z);
+                if(4==states[x][y][z]){
+			        double e0= cal_energy(false, i, j, k, x, y, z);
 
-				    states[x][y][z]= states[i][j][k];
+			        states[x][y][z]= states[i][j][k];
                     states[i][j][k]= 0;
 
-				    double ediff= cal_energy(false, i, j, k, x, y, z) - e0;
-                    if(ediff<0) error(2, "(cal_rateC) minus ediff in creation of vcc", 1, ediff);
+                    double ediff= cal_energy(false, i, j, k, x, y, z) - e0;
 
 				    states[i][j][k]= states[x][y][z];
 				    states[x][y][z]= 4;
 			
-                    rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
-							
-				    etype.push_back(8);
-				    ilist.push_back(a);
-				    nltcp.push_back(x*ny*nz+y*nz+z);
-				    jatom.push_back(states[i][j][k]);
+                    cvcc[ltcp].rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
+                    if(cvcc[ltcp].rates.back()<0) error(2, "(cal_rateC) minus ediff in creation of vcc", 1, cvcc[ltcp].rates.back()); // delete it
+                    
+				    cvcc[ltcp].altcp.push_back(ltcp);
+				    cvcc[ltcp].mltcp.push_back(ltcp2);
 				
-				    sum_rate += rates.back();
+				    rate_temp += cvcc[ltcp].rates.back();
                 }
-            }
-		}
-	}
+		    }
+
+            if(double(count) > RATIO_NOCVCC * n1nbr) cvcc.erase(ltcp);
+            else                                     rate_change += rate_temp;
+	    }
+    }
+
+	return rate_change;
+}
+
+double class_events::init_ratesC(){
+	double sum_rate= 0;
+
+	for(int a=0; a < nx*ny*nz; a ++)
+		if(*(&srf[0][0][0]+a)) sum_rate += update_ratesC(a);
 
 	return sum_rate;
 }
