@@ -35,8 +35,8 @@ int main(int nArg, char *Arg[]){
 
 		// OUTPUT DATA
 		if(0==timestep%step_log){
-			printf("\n%lld %.10e %d     %d %d     %d %d %d %d     %f %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, 
-                                                        ((double) Vja[0])/(Vja[0]+Vja[1]), ((double) Ija[0])/(Ija[0]+Ija[1]));
+			printf("\n%lld %.10e %d     %d %d     %d %d %d %d     %f %f    %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, 
+                                                        ((double) Vja[0])/(Vja[0]+Vja[1]), ((double) Ija[0])/(Ija[0]+Ija[1]), events.crates);
 			if(N_0def != 0){
 				cout << "  *** 0-defect genr: " << N_0def << " ***"; 
                 N_0def= 0;

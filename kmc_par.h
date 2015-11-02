@@ -3,22 +3,22 @@
 
 const char   par_ltc[4]=		"FCC";
 
-const int    par_nx=                      276;
-const int    par_ny=                       64;
-const int    par_nz=                       64;
-const int    par_nMlayer=                  10;
+const int    par_nx=                      660; // 620 + 2*20
+const int    par_ny=                      270;
+const int    par_nz=                       16;
+const int    par_nMlayer=                  20;
 
 const double par_compA=                   0.9; // composition of A atoms
 const int    par_nV=                        0;
 
-const double	    par_time=            1e09; 	// toal time (s)
-const long long int par_step=            5e09; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const double	    par_time=             0.4; 	// toal time (s)
+const long long int par_step=             1e5; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
 
 const long long int step_log=	          1e3; 
-const long long int step_conf=   par_step/5e0;	// timestep that output a conf file for restart later
-const long long int time_conf=   par_time/5e0;	//     time that output a conf file for restart later
-const long long int step_out=	 par_step/5e2; 
-const long long int step_his=             1e6;
+const long long int step_conf=            1e5;	// timestep that output a conf file for restart later
+const double        time_conf=           1e10;	//     time that output a conf file for restart later
+const long long int step_out=	      5e7/5e1; 
+const long long int step_his=             1e5;
 
 const bool par_isrestart=		    false;
 
@@ -32,7 +32,7 @@ const double par_dis_rec=0.866*3; // recombination distance
 const double par_dpasm1=     0.1; 
 
 // Ising model energy calculation parameters
-const double par_temp=                       700.0;
+const double par_temp=                       800.0;
 const double par_beta= 1.0/par_temp/8.617332478e-5; // 1/kbT, units: eV, K
 
 const double par_muvA=			  1.68e+15; // units: s^-1     !!!!! A: Au; B: Cu !!!!!

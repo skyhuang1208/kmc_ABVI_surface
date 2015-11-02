@@ -48,13 +48,15 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
 
             int count= 0; // count how many A-M bonds. if count > n1nbr/2, erase it.
             double rate_temp= 0; // unless count > n1nbr/2, rates_change += rate_temp
-	        for(int b= -1; b<n1nbr; b ++){
+	        for(int b= 0; b<n1nbr; b ++){
 	            int x= pbc(i+v1nbr[b][0], nx);
 	            int y= pbc(j+v1nbr[b][1], ny);
 	            int z= pbc(k+v1nbr[b][2], nz);
     	        int ltcp2= x*ny*nz + y*nz + z;
 
                 if(4==states[x][y][z]){
+                    count ++;
+
 			        double e0= cal_energy(false, i, j, k, x, y, z);
 
 			        states[x][y][z]= states[i][j][k];
@@ -66,7 +68,7 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
 				    states[x][y][z]= 4;
 			
                     cvcc[ltcp].rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
-                    if(cvcc[ltcp].rates.back()<0) error(2, "(cal_rateC) minus ediff in creation of vcc", 1, cvcc[ltcp].rates.back()); // delete it
+                    if((em+0.5*ediff)<0) error(2, "(cal_rateC) minus e in creation of vcc", 1, em+0.5*ediff); // delete it
                     
 				    cvcc[ltcp].altcp.push_back(ltcp);
 				    cvcc[ltcp].mltcp.push_back(ltcp2);

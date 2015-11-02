@@ -19,7 +19,10 @@ class class_events{
             crates= init_ratesC();
         }
 		
-		// functions
+        // variables
+        double crates;
+		
+        // functions
 		double main();
 		double ecal_whole() const; 
 	
@@ -37,7 +40,6 @@ class class_events{
             vector <int> mltcp;
         };
         unordered_map <int, struct cvcc_info> cvcc;
-        double crates;
         double init_ratesC();
 
 		///// functions of energy calculation /////

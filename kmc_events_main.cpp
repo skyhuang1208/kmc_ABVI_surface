@@ -21,12 +21,11 @@ double class_events::main(){
 	double irates= cal_ratesI(etype, rates, ilist, nltcp, jatom); // WARNING: irates before vrates so the recb map can be generated
 	double vrates= cal_ratesV(etype, rates, ilist, nltcp, jatom);
     etype.push_back(7); rates.push_back(rate_genr); // the genr event
+	double sum_rates= vrates + irates + crates + rate_genr; // sum of all rates
 
-    if(etype.size() != rates.size()) error(2, "diff", 2, etype.size(), rates.size()); // !!!!!!!!!! DETETE IT !!!!!!!!!!
+    // check
     if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz); // check
     if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
-
-	double sum_rates= vrates + irates + crates + rate_genr; // sum of all rates
 
     // perform the actual jump
     vector <int> list_inf; // a list of all inf events that have lowest energy einf
@@ -40,15 +39,14 @@ double class_events::main(){
             if(ran < crates/sum_rates){
                 double acc_cr= 0;
                 for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
-                    cvcc_info rinfo= it->second; // access rinfo of an atom
-                    for(int a=0; a<rinfo.rates.size(); a ++){ // access creation paths of the atom
-                        if( (ran >= acc_cr) && (ran < (acc_cr + rinfo.rates[a]/sum_rates) ) ){
-                            create_vcc(rinfo.altcp[a], rinfo.mltcp[a]); 
+                    for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
+                        if( (ran >= acc_cr) && (ran < (acc_cr + (it->second).rates[a]/sum_rates) ) ){
+                            create_vcc((it->second).altcp[a], (it->second).mltcp[a]); 
                             
                             return 1.0/sum_rates;
                         }
                         
-                        acc_cr += rinfo.rates[a]/sum_rates;
+                        acc_cr += (it->second).rates[a]/sum_rates;
                     }
                 }
             }
@@ -111,9 +109,6 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
         list_vcc.erase(list_vcc.begin()+vid);
     
         srf_check(nltcp);
-        
-        update_ratesC(xv*ny*nz+ yv*nz+ zv);
-        update_ratesC(x *ny*nz+ y *nz+ z);
     }
     else{
         states[x][y][z]= 0;
@@ -122,6 +117,9 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
     	if((y-yv)>ny/2) list_vcc[vid].iy --; if((y-yv)<-ny/2) list_vcc[vid].iy ++;
     	if((z-zv)>nz/2) list_vcc[vid].iz --; if((z-zv)<-nz/2) list_vcc[vid].iz ++;
     }
+    
+    crates += update_ratesC(xv*ny*nz+ yv*nz+ zv);
+    crates += update_ratesC(x *ny*nz+ y *nz+ z);
 }
 
 void class_events::actual_jumpI(int iid, int nltcp, int jatom){
@@ -138,8 +136,6 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
     if(4==states[x][y][z]){
         if(! is_inf) error(2, "(actual_jumpI) an itl to srf jump isnt instant event");        
         rules_recb(true,  iid, nltcp, jatom);
-        update_ratesC(xi*ny*nz+ yi*nz+ zi);
-        update_ratesC(x *ny*nz+ y *nz+ z);
     }
     else if(0==states[x][y][z]){
         for(int i= 0; i<list_vcc.size(); i ++){ // brutal search for the vcc in the list
@@ -188,6 +184,9 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
 	    if((y-yi)>ny/2) list_itl[iid].iy --; if((y-yi)<-ny/2) list_itl[iid].iy ++;
 	    if((z-zi)>nz/2) list_itl[iid].iz --; if((z-zi)<-nz/2) list_itl[iid].iz ++;
     }
+    
+    crates += update_ratesC(xi*ny*nz+ yi*nz+ zi);
+    crates += update_ratesC(x *ny*nz+ y *nz+ z);
 }
 	
 void class_events::create_vcc(int altcp, int mltcp){
@@ -214,9 +213,8 @@ void class_events::create_vcc(int altcp, int mltcp){
     nV ++;
     nM --;
 
-    update_ratesC(altcp);
-    update_ratesC(mltcp);
-    
+    crates += update_ratesC(altcp);
+    crates += update_ratesC(mltcp);
 }
 
 // functions in backupfun:
