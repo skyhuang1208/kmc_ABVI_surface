@@ -28,60 +28,68 @@ double class_events::main(){
     if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
     // perform the actual jump
-    vector <int> list_inf; // a list of all inf events that have lowest energy einf
-	double ran= ran_generator();
-	double acc_rate= crates/sum_rates; // accumulated rate
-	for(int i=0; i<rates.size(); i ++){
-        if(is_inf){
-            if(rates[i]<= einf) list_inf.push_back(i); // store events with einf for later use 
-        }
-        else{
-            if(ran < crates/sum_rates){
-                double acc_cr= 0;
-                for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
-                    for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
-                        if( (ran >= acc_cr) && (ran < (acc_cr + (it->second).rates[a]/sum_rates) ) ){
-                            create_vcc(it->first, (it->second).mltcp[a]); 
-                            
-                            return 1.0/sum_rates;
-                        }
-                        
-                        acc_cr += (it->second).rates[a]/sum_rates;
-                    }
-                }
-            }
-
-            if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
-		        switch(etype[i]){
-                    case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
-			        case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
-                    case 7:  genr(); N_genr ++; break;
-                    default: error(2, "(main) an unknown event type", 1, etype[i]);
-                }
-
-	            return 1.0/sum_rates;
-		
-            }
-		
-		    acc_rate += rates[i]/sum_rates;
-        }
-	}
-
     if(is_inf){
         if(0==list_inf.size()) error(2, "(main) no inf event is collected but is_inf= true");
 
-        int j= list_inf[(int) (ran*list_inf.size())]; // the randomly picked inf event that will be performed
-        switch(etype[j]){
-            case 0:  actual_jumpI(ilist[j], nltcp[j], jatom[j]); break;
-			case 1:  actual_jumpV(ilist[j], nltcp[j], jatom[j]); break;
-            default: error(2, "(main) an unknown event type in inf events", 1, etype[j]);
-        }
-        is_inf= false;
-        einf= 0;
+        for(int a=0; a<1000; a ++){ // if iterate more than 1000 times, should due to sth weird
+	        double ran= ran_generator();
+            int i= list_inf[(int) (ran*list_inf.size())]; // the randomly picked inf event that will be performed
+        
+            if(rates[i]>0) error(2, "(main) an inf event with e gt 0", 1, rates[i]); // in inf events rates contain e
+            else if(abs(rates[i] - einf)< 1e-10){
+                switch(etype[i]){
+                    case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
+			        case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
+                    default: error(2, "(main) an unknown event type in inf events", 1, etype[i]);
+                }
+        
+                is_inf= false;
+                einf= 0;
+                list_inf.clear();
 
-        return 0;
+                return 0;
+            }
+        }
+
+        error(2, "(main) inf event iterate more than 1000 times, weird!");
     }
-    else error(2, "(main) can't find finite event");
+    else{
+	    double ran= ran_generator();
+        
+        if(ran < crates/sum_rates){
+            double acc_cr= 0;
+            for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
+                for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
+                    if( (ran >= acc_cr) && (ran < (acc_cr + (it->second).rates[a]/sum_rates) ) ){
+                        create_vcc(it->first, (it->second).mltcp[a]); 
+                            
+                        return 1.0/sum_rates;
+                    }
+                        
+                    acc_cr += (it->second).rates[a]/sum_rates;
+                }
+            }
+        }
+        else{
+	        double acc_rate= crates/sum_rates; // accumulated rate
+	        for(int i=0; i<rates.size(); i ++){
+                if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
+		            switch(etype[i]){
+                        case 0:  actual_jumpI(ilist[i], nltcp[i], jatom[i]); break;
+			            case 1:  actual_jumpV(ilist[i], nltcp[i], jatom[i]); break;
+                        case 7:  genr(); N_genr ++; break;
+                        default: error(2, "(main) an unknown event type", 1, etype[i]);
+                    }
+
+	                return 1.0/sum_rates;
+                }
+		    
+                acc_rate += rates[i]/sum_rates;
+            }
+        }
+	}
+    
+    error(2, "(main) can't match any event :(");
 }
 
 void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neighbor ltcp and jumping atom

@@ -49,8 +49,10 @@ int main(int nArg, char *Arg[]){
             N_conf= (int) (totaltime / time_conf);
         }
 
-		if(0==timestep%step_out)
+		if(0==timestep%step_out){
 			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
+            write_vdep();
+        }
 		
 		if(0==timestep%step_his){
  			write_hissol(); // write sol first to construct list_srf
@@ -61,7 +63,10 @@ int main(int nArg, char *Arg[]){
 	// finalizing
 	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
 	write_conf(); cout << "<Output conf files at: " << timestep << ">";
-	if(timestep%step_out != 0) fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
+	if(timestep%step_out != 0){
+        fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
+        write_vdep();
+    }
     
     for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
     cout << "\n## vcc creation from srf ##" << endl;

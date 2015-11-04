@@ -81,6 +81,7 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                         double e= em+0.5*ediff;
                         rates.push_back(e);
                         is_inf= true;
+                        list_inf.push_back(rates.size()-1);
                         if(e<einf) einf= e;
                     }
                     else if(0==stateI)   rates.push_back(0.5 * mu * exp(-beta*(em+0.5*ediff))); // itlAB has 2 jumps(A, B), and hence divided by 2 here 
@@ -130,6 +131,7 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                         double e= ec+em+0.5*ediff;
                         rates.push_back(e);
                         is_inf= true;
+                        list_inf.push_back(rates.size()-1);
                         if(e<einf) einf= e;
                     }
                     else if(0==stateI) rates.push_back(0.5 * mu * exp(-beta*(ec+em+0.5*ediff))); // itlAB has 2 jumps: via A or B. so divided by 2 here 

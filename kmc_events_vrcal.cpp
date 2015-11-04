@@ -48,6 +48,7 @@ double class_events::cal_ratesV(vector <int> &etype, vector <double> &rates, vec
                     double e= em+0.5*ediff;
                     rates.push_back(e);
                     is_inf= true;
+                    list_inf.push_back(rates.size()-1);
                     if(e<einf) einf= e;
                 }
                 else rates.push_back(mu * exp(-beta*(em+0.5*ediff)));

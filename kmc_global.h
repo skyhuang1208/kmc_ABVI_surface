@@ -109,6 +109,7 @@ extern int pbc(int x_, int nx_);
 void write_conf();
 void write_hissol();
 void write_hisdef();
-void write_rcvcc(); // record how far created vcc go
+void write_rcvcc();
+void write_vdep(); // record how far created vcc go
 
 #endif // KMC_GLOBAL_INCLUDED

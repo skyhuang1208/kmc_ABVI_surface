@@ -30,6 +30,7 @@ class class_events{
         // infinite event //
         bool is_inf;
         double einf;
+        vector <int> list_inf;
 
         // vcc creation at surface //
         #define RATIO_NOCVCC 0.5
