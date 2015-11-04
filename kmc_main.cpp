@@ -62,6 +62,13 @@ int main(int nArg, char *Arg[]){
 	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
 	write_conf(); cout << "<Output conf files at: " << timestep << ">";
 	if(timestep%step_out != 0) fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
+    
+    for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
+    cout << "\n## vcc creation from srf ##" << endl;
+    cout << "total: " << njump[0] << endl;
+    cout << ", >=1: " << njump[1] << ", >=2: " << njump[2] << ", >=3: " << njump[3] << ", >=4: " << njump[4] << ", >=5: " << njump[5] << endl;
+    cout << ", >=6: " << njump[6] << ", >=7: " << njump[7] << ", >=8: " << njump[8] << ", >=9: " << njump[9] << endl;
+    cout << "recbED at 0: " << njump[10] << endl;
 
 	int tfcpu= time(0);
 	cout << "\n**** The simulation is done! Total CPU time: " << tfcpu - t0cpu << " secs ****" << endl;

@@ -41,7 +41,7 @@ double class_events::main(){
                 for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
                     for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
                         if( (ran >= acc_cr) && (ran < (acc_cr + (it->second).rates[a]/sum_rates) ) ){
-                            create_vcc((it->second).altcp[a], (it->second).mltcp[a]); 
+                            create_vcc(it->first, (it->second).mltcp[a]); 
                             
                             return 1.0/sum_rates;
                         }
@@ -106,6 +106,11 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
 
         srf[x][y][z]= false;
         states[x][y][z]= 4;
+        
+        if     (list_vcc[vid].njump < 0) {}
+        else if(list_vcc[vid].njump > 9) njump[9] ++;
+        else                             njump[list_vcc[vid].njump] ++;
+        
         list_vcc.erase(list_vcc.begin()+vid);
     
         srf_check(nltcp);
@@ -116,6 +121,8 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
     	if((x-xv)>nx/2) list_vcc[vid].ix --; if((x-xv)<-nx/2) list_vcc[vid].ix ++;
     	if((y-yv)>ny/2) list_vcc[vid].iy --; if((y-yv)<-ny/2) list_vcc[vid].iy ++;
     	if((z-zv)>nz/2) list_vcc[vid].iz --; if((z-zv)<-nz/2) list_vcc[vid].iz ++;
+    
+        if(list_vcc[vid].njump != -1) list_vcc[vid].njump ++;
     }
     
     crates += update_ratesC(xv*ny*nz+ yv*nz+ zv);
@@ -140,6 +147,10 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
     else if(0==states[x][y][z]){
         for(int i= 0; i<list_vcc.size(); i ++){ // brutal search for the vcc in the list
     		if(nltcp==list_vcc[i].ltcp){
+                if     (list_vcc[i].njump < 0) {}
+                else if(list_vcc[i].njump > 9) njump[9] ++;
+                else                           njump[list_vcc[i].njump] ++;
+                
                 rules_recb(false, iid, i, jatom);
                 break;
             }
@@ -201,6 +212,7 @@ void class_events::create_vcc(int altcp, int mltcp){
 	list_vcc[vid].ix= 0;
 	list_vcc[vid].iy= 0;
 	list_vcc[vid].iz= 0;
+    list_vcc[vid].njump= 0;
 
 	// Update states
 	*(&states[0][0][0]+mltcp)= ja;

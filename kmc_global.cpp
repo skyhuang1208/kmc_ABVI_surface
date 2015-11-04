@@ -30,11 +30,13 @@ FILE * his_sol;		// history file of solute atoms
 FILE * his_def;		// history file of defects
 FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
+FILE * out_vdep;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
 
 int N_genr= 0;
+int njump[10]= {0};
 long long int Vja[2]= {0};
 long long int Ija[2]= {0};
 
@@ -221,3 +223,18 @@ void write_hisdef(){
 	}
 }
 
+void write_vdep(){
+    // format: step time total >=1 >=2 >=3 >=4 >=5 >=6 >=7 >=8 >=9
+    // total 12 columns
+
+    fprintf(out_vdep, "%lld %e ", timestep, totaltime);
+    
+    for(int a=0; a<10; a ++){
+        int n=0;
+        for(int b=a; b<10; b++){
+            n += njump[b];
+        }
+        fprintf(out_vdep, "%d ", n);
+    }
+    fprintf(out_vdep, "\n");
+}

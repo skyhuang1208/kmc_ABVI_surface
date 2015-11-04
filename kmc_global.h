@@ -34,6 +34,7 @@ extern FILE * his_sol;		// history file of solute atoms
 extern FILE * his_def;		// history file of vacancies and interstitials: record every several steps
 extern FILE * his_srf;		// history file of surface atoms 
 extern FILE * out_engy;		// out file for energy calculations
+extern FILE * out_vdep;		// out file for store how long created vcc go
 
 // Parameters for mechanisms
 const double dis_rec= par_dis_rec;	// recombination distance
@@ -41,7 +42,9 @@ const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
 
 // Defect lists
 struct vcc{ // information of an vacancy
-	int ltcp;
+    vcc(): njump(-1) {}	
+    int njump;
+    int ltcp;
 	int ix, iy, iz;
 };
 struct itl{ // information of an interstitial; can declare a vector to store all interstitials
@@ -54,6 +57,7 @@ extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
 
 extern int N_genr;
+extern int njump[10];
 extern long long int Vja[2], Ija[2];
 
 // Migration parameters
@@ -105,5 +109,6 @@ extern int pbc(int x_, int nx_);
 void write_conf();
 void write_hissol();
 void write_hisdef();
+void write_rcvcc(); // record how far created vcc go
 
 #endif // KMC_GLOBAL_INCLUDED

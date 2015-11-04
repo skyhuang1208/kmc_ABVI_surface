@@ -35,9 +35,8 @@ class class_events{
         #define RATIO_NOCVCC 0.5
         struct cvcc_info{
             long long int step; // modified step
-            vector <double> rates;
-            vector <int> altcp;
             vector <int> mltcp;
+            vector <double> rates;
         };
         unordered_map <int, struct cvcc_info> cvcc;
         double init_ratesC();

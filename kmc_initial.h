@@ -25,18 +25,19 @@ class class_initial{
 			cout << "    the number of 2nd neighbors: " << n2nbr << endl;
 		
 			cout << "\n####### Generating configuration... #######" << endl;
-			if(par_isrestart){
+            if(par_isrestart){
 				cout << "RESTART FROM restart file..." << endl;
 				if(nArg != 2) error(0, "when restart flag is true, nArg must be 2");
 				
 				read_restart(name_restart, ts_bg, time_bg);
 				
-				his_sol= fopen(par_name_sol, "a");
-				his_def= fopen(par_name_def, "a");
-				his_srf= fopen(par_name_srf, "a");
-				out_engy= fopen(par_name_engy, "a");
+			    his_sol = fopen(par_name_sol,  "a");
+			    his_def = fopen(par_name_def,  "a");
+			    his_srf = fopen(par_name_srf,  "a");
+			    out_engy= fopen(par_name_engy, "a");
+			    out_vdep= fopen(par_name_vdep, "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
-			}
+            }
 			else{
 				cout << "START FROM a random configuration..." << endl;
 				ts_bg= 0; time_bg= 0;
@@ -45,16 +46,18 @@ class class_initial{
 				write_conf();
 				cout << "Output t0 conf files" << endl;
 				
-				his_sol= fopen(par_name_sol, "w");
-				his_def= fopen(par_name_def, "w");
-				his_srf= fopen(par_name_srf, "w");
-				out_engy= fopen(par_name_engy, "w");
-				cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
+			    his_sol = fopen(par_name_sol,  "w");
+			    his_def = fopen(par_name_def,  "w");
+			    his_srf = fopen(par_name_srf,  "w");
+			    out_engy= fopen(par_name_engy, "w");
+			    out_vdep= fopen(par_name_vdep, "w");
+                cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
 			if(NULL==his_def)  error(2, "(class_events) the vacancy history file was not opened!");
 			if(NULL==his_srf)  error(2, "(class_events) the surface history file was not opened!");
 			if(NULL==out_engy) error(2, "(class_events) the          energy file was not opened!");
+			if(NULL==out_vdep) error(2, "(class_events) the          vdepth file was not opened!");
 		
 			sum_mag= 2*nAA + 1*nA -1*nB -2*nBB;
 

@@ -28,9 +28,8 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
             for(int b=0; b<cvcc[ltcp].rates.size(); b ++) rate_change -= cvcc[ltcp].rates[b];
                 
             if(*(&srf[0][0][0]+ltcp)){
-                cvcc[ltcp].rates.clear();
-                cvcc[ltcp].altcp.clear();
                 cvcc[ltcp].mltcp.clear();
+                cvcc[ltcp].rates.clear();
             }
             else cvcc.erase(ltcp);
         }
@@ -67,11 +66,9 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
 				    states[i][j][k]= states[x][y][z];
 				    states[x][y][z]= 4;
 			
+				    cvcc[ltcp].mltcp.push_back(ltcp2);
                     cvcc[ltcp].rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
                     if((em+0.5*ediff)<0) error(2, "(cal_rateC) minus e in creation of vcc", 1, em+0.5*ediff); // delete it
-                    
-				    cvcc[ltcp].altcp.push_back(ltcp);
-				    cvcc[ltcp].mltcp.push_back(ltcp2);
 				
 				    rate_temp += cvcc[ltcp].rates.back();
                 }

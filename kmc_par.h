@@ -5,20 +5,20 @@ const char   par_ltc[4]=		"FCC";
 
 const int    par_nx=                      660; // 620 + 2*20
 const int    par_ny=                      270;
-const int    par_nz=                       16;
+const int    par_nz=                        4;
 const int    par_nMlayer=                  20;
 
 const double par_compA=                   0.9; // composition of A atoms
 const int    par_nV=                        0;
 
 const double	    par_time=             0.4; 	// toal time (s)
-const long long int par_step=             1e5; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const long long int par_step=             1e9; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
 
-const long long int step_log=	          1e3; 
-const long long int step_conf=            1e5;	// timestep that output a conf file for restart later
+const long long int step_log=	          1e6; 
+const long long int step_conf=            1e8;	// timestep that output a conf file for restart later
 const double        time_conf=           1e10;	//     time that output a conf file for restart later
-const long long int step_out=	      5e7/5e1; 
-const long long int step_his=             1e5;
+const long long int step_out=	          1e7; 
+const long long int step_his=             1e6;
 
 const bool par_isrestart=		    false;
 
@@ -26,6 +26,7 @@ const char   par_name_sol[20]=      "history.sol";
 const char   par_name_def[20]=      "history.def";
 const char   par_name_srf[20]=      "history.srf";
 const char   par_name_engy[20]=      "out.energy";
+const char   par_name_vdep[20]=      "out.vdepth";
 
 // Parameters for events
 const double par_dis_rec=0.866*3; // recombination distance
