@@ -37,7 +37,10 @@ extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
 
 // Parameters for mechanisms
-const double dis_rec= par_dis_rec;	// recombination distance
+const bool is_noflckr= par_isnoflckr;   // if on, more than 1 jump for vcc creation on srf (no flickering)
+const int  N_NFjumps=  par_N_NFjumps;   // number of straight jumps (no flickering)
+const double NFratio=  par_NFratio;     // ratio for the cvcc to not flickering (no flickering)
+const double dis_rec=  par_dis_rec;	// recombination distance
 const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
 
 // Defect lists

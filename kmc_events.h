@@ -15,18 +15,21 @@ class class_events{
 		
             is_inf= false;
             einf= 0;
+            NF_Nj= 0;
+            NF_rates= 0;
         
-            crates= init_ratesC();
+            cvcc_rates= init_ratesC();
         }
 		
         // variables
-        double crates;
+        double cvcc_rates;
 		
         // functions
 		double main();
 		double ecal_whole() const; 
 	
 	private:
+        // ********************  VARIABLES  ******************** //
         // infinite event //
         bool is_inf;
         double einf;
@@ -41,6 +44,14 @@ class class_events{
         };
         unordered_map <int, struct cvcc_info> cvcc;
         double init_ratesC();
+        
+        // cvcc straight jump info (no flickering) //
+        int NF_id; // the newly created vcc that the straight jumps is under going
+        int NF_Nj; // the number of jumps remained
+        double NF_rates;
+        vector <int> list_nf; // a list of ids in rates vector that is used for NF
+
+        // ********************  VARIABLES  ******************** //
 
 		///// functions of energy calculation /////
 		double cal_energy(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 

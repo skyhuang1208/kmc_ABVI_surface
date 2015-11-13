@@ -11,16 +11,19 @@ const int    par_nMlayer=                  20;
 const double par_compA=                   0.9; // composition of A atoms
 const int    par_nV=                        0;
 
-const double	    par_time=             0.4; 	// toal time (s)
-const long long int par_step=             1e9; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const double	    par_time=            0.04; 	// toal time (s)
+const long long int par_step=            1e11; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
 
 const long long int step_log=	          1e6; 
-const long long int step_conf=            1e8;	// timestep that output a conf file for restart later
+const long long int step_conf=            5e8;	// timestep that output a conf file for restart later
 const double        time_conf=           1e10;	//     time that output a conf file for restart later
 const long long int step_out=	          1e7; 
 const long long int step_his=             1e6;
 
 const bool par_isrestart=		    false;
+const bool par_isnoflckr=		    false; // use a straight jumps for cvcc (no flickering)
+const int  par_N_NFjumps=		        1; // number of straight jumps (no flickering)
+const double par_NFratio=		        1; // ratio for the cvcc to not flickering (no flickering)
 
 const char   par_name_sol[20]=      "history.sol";
 const char   par_name_def[20]=      "history.def";
@@ -30,10 +33,10 @@ const char   par_name_vdep[20]=      "out.vdepth";
 
 // Parameters for events
 const double par_dis_rec=0.866*3; // recombination distance
-const double par_dpasm1=     0.1; 
+const double par_dpasm1=     1.0; 
 
 // Ising model energy calculation parameters
-const double par_temp=                       800.0;
+const double par_temp=                       700.0;
 const double par_beta= 1.0/par_temp/8.617332478e-5; // 1/kbT, units: eV, K
 
 const double par_muvA=			  1.68e+15; // units: s^-1     !!!!! A: Au; B: Cu !!!!!
