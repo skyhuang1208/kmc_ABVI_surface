@@ -50,6 +50,7 @@ class class_events{
         int NF_Nj; // the number of jumps remained
         double NF_rates;
         vector <int> list_nf; // a list of ids in rates vector that is used for NF
+        vector <int> list_update;
 
         // ********************  VARIABLES  ******************** //
 

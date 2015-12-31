@@ -65,7 +65,10 @@ void class_events::srf_check(int mltcp){ // when vacuum changed, check if srf ar
             z= pbc(k+v1nbr[a][2], nz);
         }
         
-        if(states[x][y][z] != 1 && states[x][y][z] != -1) continue;
+        if(states[x][y][z] != 1 && states[x][y][z] != -1){
+            srf[x][y][z]= false;
+            continue;
+        }
 
         bool is_srf= false;
         for(int b=0; b<n1nbr; b ++){
@@ -78,6 +81,8 @@ void class_events::srf_check(int mltcp){ // when vacuum changed, check if srf ar
             }
         }
 
+        if((is_srf != srf[x][y][z]) && is_noflckr) list_update.push_back(x*ny*nz+y*nz+z);
+        
         srf[x][y][z]= is_srf; 
     }
 }

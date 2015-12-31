@@ -48,7 +48,9 @@ double class_events::main(){
                 einf= 0;
                 list_inf.clear();
 
-                NF_Nj= 0; // (no flickering)
+                NF_Nj= 0;       // (no flickering)
+                NF_rates= 0;    // (no flickering)
+                list_nf.clear();// (no flickering)
 
                 return 0;
             }
@@ -68,7 +70,7 @@ double class_events::main(){
                 NF_rates= 0;                    // (no flickering)
                 list_nf.clear();                // (no flickering)
             
-                return 0;                       // (no flickering)
+                return 1.0/sum_rates;           // (no flickering)
             }                                   // (no flickering)
             
             acc_nf += rates[i]/NF_rates;        // (no flickering)
@@ -81,13 +83,15 @@ double class_events::main(){
             double acc_cr= 0;
             for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
                 for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
-                    if( (ran >= acc_cr) && (ran < (acc_cr + (it->second).rates[a]/sum_rates) ) ){
+                    double rate_a= (it->second).rates[a]; if(is_noflckr) rate_a *= NFratio;  // if no flickering, multiply by the NFratio
+
+                    if( (ran >= acc_cr) && (ran < (acc_cr + rate_a/sum_rates) ) ){
                         create_vcc(it->first, (it->second).mltcp[a]); 
                             
                         return 1.0/sum_rates;
                     }
                         
-                    acc_cr += (it->second).rates[a]/sum_rates;
+                    acc_cr += rate_a/sum_rates;
                 }
             }
         }
@@ -142,7 +146,6 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
         
         list_vcc.erase(list_vcc.begin()+vid);
     
-        srf_check(nltcp);
     }
     else{
         states[x][y][z]= 0;
@@ -151,12 +154,15 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
     	if((y-yv)>ny/2) list_vcc[vid].iy --; if((y-yv)<-ny/2) list_vcc[vid].iy ++;
     	if((z-zv)>nz/2) list_vcc[vid].iz --; if((z-zv)<-nz/2) list_vcc[vid].iz ++;
     
-        if(list_vcc[vid].njump ==  0) srf_check(nltcp); // first step of the cvcc, caution!
         if(list_vcc[vid].njump != -1) list_vcc[vid].njump ++;
     }
     
+    srf_check(nltcp);
+    srf_check(xv*ny*nz + yv*nz + zv);
     cvcc_rates += update_ratesC(xv*ny*nz+ yv*nz+ zv);
     cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
+    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
+    list_update.clear();
 }
 
 void class_events::actual_jumpI(int iid, int nltcp, int jatom){
@@ -178,7 +184,6 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
         for(int i= 0; i<list_vcc.size(); i ++){ // brutal search for the vcc in the list
     		if(nltcp==list_vcc[i].ltcp){
                 rules_recb(false, iid, i, jatom);
-                if(list_vcc[i].njump ==  0) srf_check(nltcp); // first step of the cvcc, caution!
                 break;
             }
         }
@@ -223,8 +228,12 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
 	    if((z-zi)>nz/2) list_itl[iid].iz --; if((z-zi)<-nz/2) list_itl[iid].iz ++;
     }
     
+    srf_check(nltcp);
+    srf_check(xi*ny*nz + yi*nz + zi);
     cvcc_rates += update_ratesC(xi*ny*nz+ yi*nz+ zi);
     cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
+    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
+    list_update.clear();
 }
 	
 void class_events::create_vcc(int altcp, int mltcp){
@@ -247,13 +256,15 @@ void class_events::create_vcc(int altcp, int mltcp){
        *(&srf[0][0][0]+mltcp)= true;
        *(&srf[0][0][0]+altcp)= false;
 
-    srf_check(mltcp);
-
     nV ++;
     nM --;
 
+    srf_check(altcp);
+    srf_check(mltcp);
     cvcc_rates += update_ratesC(altcp);
     cvcc_rates += update_ratesC(mltcp);
+    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
+    list_update.clear();
 
     if(is_noflckr){
         NF_id= vid;         // vcc id for staight jumps (no flickering)

@@ -1,7 +1,16 @@
-!!!!! recombination is no longer a special event. it is part of the jumps. so every jump check if recb happens and rate should be calculated accordingly !!!!!
-
-ABVI code but with a surface
-	add new species 4 as the "vacuum"
-	surface interactions
-		V moves outo surface creating vacuum
-		I moves outo surface leaving a new atom
+This is kinetic Monte Carlo codes of ABVI systems with surfaces (with prefix kmc_)
+    1. par.h: input parameters 
+    
+    2. global.h, global.cpp: contains global constants, variables and global functions
+    
+    3. initial.h, initial.cpp: initiate the simulation
+    
+    4. events_*: perform events in the simulation
+        a. main.cpp: for each step it is executed once
+                     go through all rate calculations, pick one event and perfomr it
+        b. ecal.cpp: calculate energy of an input configuration
+        c. vrcal.cpp, events_ircal.cpp: calculate Vacancy and Interstitial jumping rates
+        d. recb.cpp: perform an recombination event
+        e. genr.cpp: perform a generation event
+    
+    5. main.cpp: where main function is

@@ -317,7 +317,7 @@ void class_initial::init_par(){
 	// print out the parameters to log file
 	cout << "\n##### Energy calculation parameters #####" << endl; 
 	
-	cout << "beta= " << beta << endl;
+	cout << "temperature= " << temp << ", beta= " << beta << endl;
 	printf("Vacancy mu= %f %f\n", muvA, muvB);
 	printf("Interstitial mu= %f %f\n", muiA, muiB);
 	printf("Vacancy Em= %f %f\n", emvA, emvB);
