@@ -9,7 +9,7 @@ const int    par_nz=                        4;
 const int    par_nMlayer=                  20;
 
 const double par_compA=                   0.9; // composition of A atoms
-const int    par_nV=                        0;
+const double par_compV=                     0; // vcc; set >1.0 to get only 1 vcc
 
 const double	    par_time=            0.04; 	// toal time (s)
 const long long int par_step=            1e11; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)

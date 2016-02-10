@@ -64,8 +64,13 @@ void class_initial::ltc_constructor(){
 	}
 }
 
-void class_initial::init_states_array(int nVset, double compA, int nMlayer){
+void class_initial::init_states_array(double compV, double compA, int nMlayer){
 	// STATE 0: vacancy, 1: A atom, -1: B atom, 4: Vacuum
+
+    double pV, pA;
+    bool is_1vcc; // if compV>1, is 1 vcc
+    if(compV >1.0){ is_1vcc= true;  pV= 0;     pA= compA; }
+    else          { is_1vcc= false; pV= compV; pA= compA*(1-compV); }
 
     for(int i=0; i<nx; i ++){	
 	    for(int j=0; j<ny; j ++){	
@@ -74,12 +79,15 @@ void class_initial::init_states_array(int nVset, double compA, int nMlayer){
 		        else{
 			            double ran= ran_generator();
 
-			            if(ran < compA)             states[i][j][k]= 1;
+                        if(ran < pV)                states[i][j][k]= 0;
+                        else if(ran < (pV+pA))      states[i][j][k]= 1;
 			            else                        states[i][j][k]=-1;
 		        }
     }}}
-	if(nVset>1)  error(1, "(init_states_array) nVset is larger than 1, need code modify", 1, nVset);
-    if(nVset==1) states[nx/2][ny/2][nz/2]= 0;
+    if(is_1vcc){
+        states[nx/2][ny/2][nz/2]= 0; 
+        cout << "compV gt 1: only 1 vcc\n";
+    }
 
 	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0;
 	////////// CHECK //////////
@@ -111,7 +119,7 @@ void class_initial::init_states_array(int nVset, double compA, int nMlayer){
                     default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
 	            }
     }}}
-	if(nV != nVset) error(1, "(init_states_array) The number of vacancies is not nVset", 2, nV, nVset);
+	if(compV>1 && nV != 1) error(1, "(init_states_array) The number of vacancies is not 1", 2, nV, compV); // delete
 #define TOL 0.01
 	int nAtotal= nA + nB;
 	if(abs((double) nA/nAtotal-compA) > TOL) error(1, "(init_states_array) the composition of generated conf is inconsistent of compA", 1, nA);
