@@ -47,7 +47,6 @@ double class_events::cal_ratesV(vector <int> &etype, vector <double> &rates, vec
                 if((em+0.5*ediff)<0){
                     double e= em+0.5*ediff;
                     rates.push_back(e);
-                    is_inf= true;
                     list_inf.push_back(rates.size()-1);
                     if(e<einf) einf= e;
                 }
@@ -59,11 +58,6 @@ double class_events::cal_ratesV(vector <int> &etype, vector <double> &rates, vec
 				jatom.push_back(states[x][y][z]);
 				
 				sum_rate += rates.back();
-
-                if((NF_Nj != 0) && (ivcc == NF_id) && (! srf[x][y][z])){ // (no flickering)
-                    list_nf.push_back(rates.size()-1);                   // (no flickering)
-				    NF_rates += rates.back();                            // (no flickering)
-                }                                                        // (no flickering)
 			}
 		}
 	}

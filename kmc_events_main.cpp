@@ -20,7 +20,7 @@ double class_events::main(){
 	// perform imaginary jumps and cal rates
 	double irates= cal_ratesI(etype, rates, ilist, nltcp, jatom); // WARNING: irates before vrates so the recb map can be generated
 	double vrates= cal_ratesV(etype, rates, ilist, nltcp, jatom);
-    double crates= cvcc_rates; if(is_noflckr) crates *= NFratio;  // if no flickering, multiply by the NFratio
+    double crates= cvcc_rates;
     etype.push_back(7); rates.push_back(rate_genr); // the genr event
 	double sum_rates= vrates + irates + crates + rate_genr; // sum of all rates
 
@@ -29,9 +29,7 @@ double class_events::main(){
     if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
     // perform the actual jump
-    if(is_inf){
-        if(0==list_inf.size()) error(2, "(main) no inf event is collected but is_inf= true");
-
+    if(list_inf.size() != 0){ // spontaneous events
         for(int a=0; a<1000; a ++){ // if iterate more than 1000 times, should due to sth weird
 	        double ran= ran_generator();
             int i= list_inf[(int) (ran*list_inf.size())]; // the randomly picked inf event that will be performed
@@ -44,13 +42,8 @@ double class_events::main(){
                     default: error(2, "(main) an unknown event type in inf events", 1, etype[i]);
                 }
         
-                is_inf= false;
                 einf= 0;
                 list_inf.clear();
-
-                NF_Nj= 0;       // (no flickering)
-                NF_rates= 0;    // (no flickering)
-                list_nf.clear();// (no flickering)
 
                 return 0;
             }
@@ -58,32 +51,14 @@ double class_events::main(){
 
         error(2, "(main) inf event iterate more than 1000 times, weird!");
     }
-    else if(NF_Nj != 0){                        // (no flickering)
-	    double ran= ran_generator();
-	    
-        double acc_nf= 0; // accumulated rate
-	    for(int a=0; a<list_nf.size(); a ++){   // (no flickering)
-            int i= list_nf.at(a);               // (no flickering)
-            if( (ran >= acc_nf) && (ran < (acc_nf + rates[i]/NF_rates) ) ){			
-			    actual_jumpV(ilist[i], nltcp[i], jatom[i]);
-                NF_Nj --;                       // (no flickering)
-                NF_rates= 0;                    // (no flickering)
-                list_nf.clear();                // (no flickering)
-            
-                return 1.0/sum_rates;           // (no flickering)
-            }                                   // (no flickering)
-            
-            acc_nf += rates[i]/NF_rates;        // (no flickering)
-        }                                       // (no flickering)
-    }                                           // (no flickering)
     else{
 	    double ran= ran_generator();
         
-        if(ran < crates/sum_rates){
+        if(ran < crates/sum_rates){ // vcc creation
             double acc_cr= 0;
             for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
                 for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
-                    double rate_a= (it->second).rates[a]; if(is_noflckr) rate_a *= NFratio;  // if no flickering, multiply by the NFratio
+                    double rate_a= (it->second).rates[a];
 
                     if( (ran >= acc_cr) && (ran < (acc_cr + rate_a/sum_rates) ) ){
                         create_vcc(it->first, (it->second).mltcp[a]); 
@@ -95,7 +70,7 @@ double class_events::main(){
                 }
             }
         }
-        else{
+        else{ // jump & genr
 	        double acc_rate= crates/sum_rates; // accumulated rate
 	        for(int i=0; i<rates.size(); i ++){
                 if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
@@ -157,12 +132,12 @@ void class_events::actual_jumpV(int vid, int nltcp, int jatom){ // vcc id, neigh
         if(list_vcc[vid].njump != -1) list_vcc[vid].njump ++;
     }
     
-    srf_check(nltcp);
-    srf_check(xv*ny*nz + yv*nz + zv);
-    cvcc_rates += update_ratesC(xv*ny*nz+ yv*nz+ zv);
-    cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
-    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
-    list_update.clear();
+    if(nM>0){ // update srf & creation
+        srf_check(nltcp);
+        srf_check(xv*ny*nz + yv*nz + zv);
+        cvcc_rates += update_ratesC(nltcp);
+        cvcc_rates += update_ratesC(xv*ny*nz+ yv*nz+ zv);
+    }
 }
 
 void class_events::actual_jumpI(int iid, int nltcp, int jatom){
@@ -177,7 +152,7 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
 	int z= (int)  nltcp%nz;
 	
     if(4==states[x][y][z]){
-        if(! is_inf) error(2, "(actual_jumpI) an itl to srf jump isnt instant event");        
+        if(list_inf.size() == 0) error(2, "(actual_jumpI) an itl to srf jump isnt instant event");        
         rules_recb(true,  iid, nltcp, jatom);
     }
     else if(0==states[x][y][z]){
@@ -228,12 +203,12 @@ void class_events::actual_jumpI(int iid, int nltcp, int jatom){
 	    if((z-zi)>nz/2) list_itl[iid].iz --; if((z-zi)<-nz/2) list_itl[iid].iz ++;
     }
     
-    srf_check(nltcp);
-    srf_check(xi*ny*nz + yi*nz + zi);
-    cvcc_rates += update_ratesC(xi*ny*nz+ yi*nz+ zi);
-    cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
-    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
-    list_update.clear();
+    if(nM>0){ // update srf & creation
+        srf_check(nltcp);
+        srf_check(xi*ny*nz + yi*nz + zi);
+        cvcc_rates += update_ratesC(xi*ny*nz+ yi*nz+ zi);
+        cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
+    }
 }
 	
 void class_events::create_vcc(int altcp, int mltcp){
@@ -263,18 +238,4 @@ void class_events::create_vcc(int altcp, int mltcp){
     srf_check(mltcp);
     cvcc_rates += update_ratesC(altcp);
     cvcc_rates += update_ratesC(mltcp);
-    for(int a=0; a<list_update.size(); a ++) cvcc_rates += update_ratesC(list_update[a]);
-    list_update.clear();
-
-    if(is_noflckr){
-        NF_id= vid;         // vcc id for staight jumps (no flickering)
-        NF_Nj= N_NFjumps;   // N of jumps remained (no flickering)
-    }
 }
-
-// functions in backupfun:
-//	int vpos[3];
-//	events.vac_jump_random(par_pr_vjump, vpos);
-//	events.vac_recb(vpos);
-//	events.int_motions();
-

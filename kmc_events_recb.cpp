@@ -81,8 +81,6 @@ void class_events::srf_check(int mltcp){ // when vacuum changed, check if srf ar
             }
         }
 
-        if((is_srf != srf[x][y][z]) && is_noflckr) list_update.push_back(x*ny*nz+y*nz+z);
-        
         srf[x][y][z]= is_srf; 
     }
 }

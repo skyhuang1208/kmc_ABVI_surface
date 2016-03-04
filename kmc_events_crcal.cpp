@@ -46,7 +46,6 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
             }
 
             int count_AM= 0; // count how many A-M bonds.               if count > n1nbr/2, erase it.
-            int count_JS= 0; // count how many jumping site surrounded. if count == 0,      erase it. (no flickering) 
             double rate_temp= 0; // unless meet criterion, rates_change += rate_temp
 	        for(int b= 0; b<n1nbr; b ++){
 	            int x= pbc(i+v1nbr[b][0], nx);
@@ -74,11 +73,9 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
 				    rate_temp += cvcc[ltcp].rates.back();
                 }
                 
-                if((! srf[x][y][z]) && (1==states[x][y][z] || -1==states[x][y][z])) count_JS++; // (no flickering)
 		    }
 
             if(double( count_AM) > RATIO_NOCVCC * n1nbr) cvcc.erase(ltcp);
-            else if(is_noflckr && (0==count_JS))         cvcc.erase(ltcp); // can't get away from srf after cvcc (no flickering)
             else                                         rate_change += rate_temp;
 	    }
     }

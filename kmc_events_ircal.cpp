@@ -80,7 +80,6 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                     if((em+0.5*ediff)<0){
                         double e= em+0.5*ediff;
                         rates.push_back(e);
-                        is_inf= true;
                         list_inf.push_back(rates.size()-1);
                         if(e<einf) einf= e;
                     }
@@ -130,7 +129,6 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                     if((ec+em+0.5*ediff)<0){
                         double e= ec+em+0.5*ediff;
                         rates.push_back(e);
-                        is_inf= true;
                         list_inf.push_back(rates.size()-1);
                         if(e<einf) einf= e;
                     }

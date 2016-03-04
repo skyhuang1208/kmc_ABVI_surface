@@ -8,22 +8,20 @@ const int    par_ny=                      270;
 const int    par_nz=                        4;
 const int    par_nMlayer=                  20;
 
-const double par_compA=                   0.9; // composition of A atoms
+const double par_compA=                   0.9; // composition of A (div by A+B)
 const double par_compV=                     0; // vcc; set >1.0 to get only 1 vcc
 
-const double	    par_time=            0.04; 	// toal time (s)
-const long long int par_step=            1e11; 	// toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const double	    par_time=            0.04; // TIME: total (s)
+const double        time_conf=           1e10; // TIME: output conf cile
 
-const long long int step_log=	          1e6; 
-const long long int step_conf=            5e8;	// timestep that output a conf file for restart later
-const double        time_conf=           1e10;	//     time that output a conf file for restart later
+const long long int par_step=            1e11; // STEP: total (turn off by setting minus)
+const long long int step_conf=            5e8; // STEP: output conf file
+
+const long long int step_log=	          1e6;
 const long long int step_out=	          1e7; 
 const long long int step_his=             1e6;
 
 const bool par_isrestart=		    false;
-const bool par_isnoflckr=		    false; // use a straight jumps for cvcc (no flickering)
-const int  par_N_NFjumps=		        1; // number of straight jumps (no flickering)
-const double par_NFratio=		        1; // ratio for the cvcc to not flickering (no flickering)
 
 const char   par_name_sol[20]=      "history.sol";
 const char   par_name_def[20]=      "history.def";
@@ -123,7 +121,4 @@ const double eM2A=                           0;
 const double eM2V=                           0;
 const double eM2B=                           0;
 
-// trapping number: solute atom trapping and intersitial trapping							 
-// 	const int par_trNsol= 3; // trapping number by solute atoms
-// 	const int par_trNint= 3; // trapping number by interstitials
 #endif // KMC_PAR_INCLUDED

@@ -13,10 +13,7 @@ class class_events{
 			cout << "##Generation parameters (rate_genr) " << rate_genr << " (damage/s)" << endl;
 			cout << "##Recombination parameters: 2nd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
 		
-            is_inf= false;
             einf= 0;
-            NF_Nj= 0;
-            NF_rates= 0;
         
             cvcc_rates= init_ratesC();
         }
@@ -31,7 +28,6 @@ class class_events{
 	private:
         // ********************  VARIABLES  ******************** //
         // infinite event //
-        bool is_inf;
         double einf;
         vector <int> list_inf;
 
@@ -43,16 +39,8 @@ class class_events{
             vector <double> rates;
         };
         unordered_map <int, struct cvcc_info> cvcc;
-        double init_ratesC();
-        
-        // cvcc straight jump info (no flickering) //
-        int NF_id; // the newly created vcc that the straight jumps is under going
-        int NF_Nj; // the number of jumps remained
-        double NF_rates;
-        vector <int> list_nf; // a list of ids in rates vector that is used for NF
-        vector <int> list_update;
         // ********************  VARIABLES  ******************** //
-
+        
 		///// functions of energy calculation /////
 		double cal_energy(bool is_itl, int x1, int y1, int z1, int x2, int y2, int z2) const; 
 		int powc(int base, int index) const;
@@ -74,6 +62,7 @@ class class_events{
 		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
         double update_ratesC(int ltcp_in); // update rates of vcc creation at srf
         double cal_ratesC(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &nltcp, vector <int> &jatom);
+        double init_ratesC();
 		
         ///// functions for recombination /////
         void rules_recb(bool is_vcm, int ii, int iv, int ja= 0);
@@ -81,3 +70,11 @@ class class_events{
 };
 
 #endif // KMC_EVENTS_INCLUDED
+        
+        // cvcc straight jump info (no flickering) //
+//        int NF_id; // the newly created vcc that the straight jumps is under going
+//        int NF_Nj; // the number of jumps remained
+//        double NF_rates;
+//        vector <int> list_nf; // a list of ids in rates vector that is used for NF
+//        vector <int> list_update;
+
