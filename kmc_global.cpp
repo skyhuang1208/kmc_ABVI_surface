@@ -150,7 +150,7 @@ void write_conf(){
                     else             of_ltcp << "0" << endl;
                 }
 				else if (0==states[i][j][k] && (! itlAB[i][j][k])){
-					int id; for(id=0; list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
+					int id; for(id=0; id<list_vcc.size() && list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
 					
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
 
@@ -237,4 +237,27 @@ void write_vdep(){
         fprintf(out_vdep, "%d ", n);
     }
     fprintf(out_vdep, "\n");
+}
+
+void write_metrohis(){
+	int nsol= 0;
+	int nvcc= 0;
+    
+    fprintf(his_sol, "%d\n", nB);
+	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
+    fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
+	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
+	for(int i=0; i<nx*ny*nz; i++){
+		if( -1== *(&states[0][0][0]+i) ){
+			nsol ++;
+			fprintf(his_sol, "%d\n", i);
+		}
+		if(  0== *(&states[0][0][0]+i) ){
+            nvcc ++;
+		    fprintf(his_def, "0 %d 0 0 0\n", i);
+        }
+	}
+    
+    if(nsol != nB) error(2, "(write_metrohis) sol value inconsistent", 2, nsol, nB);
+    if(nvcc != nV) error(2, "(write_metrohis) vcc value inconsistent", 2, nvcc, nV);
 }
