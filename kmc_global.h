@@ -1,5 +1,6 @@
 #ifndef KMC_GLOBAL_INCLUDED
 #define KMC_GLOBAL_INCLUDED
+#include <fstream>
 #include <cstring>
 #include <vector>
 #include "kmc_par.h"
@@ -23,7 +24,7 @@ const int ny=  par_ny;
 const int nz=  par_nz;
 const int x_sink= (int) (nx/2);
 extern int nA, nB, nV, nAA, nBB, nAB, nM;
-extern int sum_mag; // sum of magnitization; should be conserved
+extern int mag; // sum of magnitization; should be conserved
 extern int  states[nx][ny][nz];
 extern bool  itlAB[nx][ny][nz];
 extern bool    srf[nx][ny][nz];
@@ -35,10 +36,16 @@ extern FILE * his_def;		// history file of vacancies and interstitials: record e
 extern FILE * his_srf;		// history file of surface atoms 
 extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
+extern FILE * out_eSGC;    // out file of semi-canonical ensemble e
+extern FILE * out_sro;
 
 // Parameters for mechanisms
+const bool is_noflckr= par_isnoflckr;   // if on, more than 1 jump for vcc creation on srf (no flickering)
+const int  N_NFjumps=  par_N_NFjumps;   // number of straight jumps (no flickering)
+const double NFratio=  par_NFratio;     // ratio for the cvcc to not flickering (no flickering)
 const double dis_rec=  par_dis_rec;	// recombination distance
 const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
+const double mu= par_mu; // chemical potential
 
 // Defect lists
 struct vcc{ // information of an vacancy
@@ -64,10 +71,10 @@ extern long long int Vja[2], Ija[2];
 const double temp= par_temp; 
 const double beta= par_beta;
 
-const double muvA= par_muvA; 
-const double muvB= par_muvB; 
-const double muiA= par_muiA; 
-const double muiB= par_muiB; 
+const double nuvA= par_nuvA; 
+const double nuvB= par_nuvB; 
+const double nuiA= par_nuiA; 
+const double nuiB= par_nuiB; 
 
 const double emvA= par_emvA;
 const double emvB= par_emvB;
@@ -109,8 +116,13 @@ extern int pbc(int x_, int nx_);
 void write_conf();
 void write_hissol();
 void write_hisdef();
-void write_metrohis();
 void write_rcvcc();
 void write_vdep(); // record how far created vcc go
+void write_metrohis();
+
+int cal_Bnbr(int N_Bnbr, int x, int y, int z);
+double ecal_one(int xi, int yi, int zi); // use only for ABV metropolis MC 
+double ecal_range(int xlo=0, int xhi=nx-1, int ylo=0, int yhi=ny-1, int zlo=0, int zhi=nz-1);
+double ecal_swap(int x1, int y1, int z1, int x2, int y2, int z2);
 
 #endif // KMC_GLOBAL_INCLUDED

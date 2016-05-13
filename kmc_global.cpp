@@ -20,7 +20,7 @@ int v2nbr[MAX_NNBR][3];	// indexes vectors of 2nd neighbors
 double vbra[3][3];	// coordinate vectors of bravice lattice
 
 int nA, nB, nV, nAA, nBB, nAB, nM;
-int sum_mag; // sum of magnitization; should be conserved
+int mag; // sum of magnitization; should be conserved
 int  states[nx][ny][nz];
 bool  itlAB[nx][ny][nz]= {false};
 bool    srf[nx][ny][nz]= {false};
@@ -31,6 +31,8 @@ FILE * his_def;		// history file of defects
 FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
 FILE * out_vdep;
+FILE * out_eSGC;    // out file of semi-canonical ensemble e
+FILE * out_sro;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
@@ -189,24 +191,8 @@ void write_hissol(){
 			ncheck ++;
 			fprintf(his_sol, "%d\n", i);
 		}
-
-		if(*(&srf[0][0][0]+i) ){ // because # of srf atom is unknown
-		    list_srf.push_back(i);
-        }
 	}
-    
-    // OUTPUT his_srf
-	fprintf(his_srf, "%lu\n", list_srf.size());
-	fprintf(his_srf, "T: %lld %e\n", timestep, totaltime);
-    
-    for(int i=0; i<list_srf.size(); i++){
-		int ltcp= list_srf[i];
-		fprintf(his_srf, "%d %d %d %d\n", *(&states[0][0][0]+ltcp), (int) (ltcp/nz)/ny, (int) (ltcp/nz)%ny, (int) ltcp%nz);
-	}
-
-	if(ncheck != nB) error(0, "(write_hissol) nB inconsistent", 2, ncheck, nB); // delete it
 }
-
 
 void write_hisdef(){
 	// OUTPUT his_def
@@ -221,22 +207,6 @@ void write_hisdef(){
 		if(0==type) type= 3;
 		fprintf(his_def, "%d %d %d %d %d\n", type, list_itl[i].ltcp, list_itl[i].ix, list_itl[i].iy, list_itl[i].iz);
 	}
-}
-
-void write_vdep(){
-    // format: step time total >=1 >=2 >=3 >=4 >=5 >=6 >=7 >=8 >=9
-    // total 12 columns
-
-    fprintf(out_vdep, "%lld %e ", timestep, totaltime);
-    
-    for(int a=0; a<10; a ++){
-        int n=0;
-        for(int b=a; b<10; b++){
-            n += njump[b];
-        }
-        fprintf(out_vdep, "%d ", n);
-    }
-    fprintf(out_vdep, "\n");
 }
 
 void write_metrohis(){
@@ -257,6 +227,9 @@ void write_metrohis(){
 		    fprintf(his_def, "0 %d 0 0 0\n", i);
         }
 	}
+    
+    fflush(his_sol);
+    fflush(his_def);
     
     if(nsol != nB) error(2, "(write_metrohis) sol value inconsistent", 2, nsol, nB);
     if(nvcc != nV) error(2, "(write_metrohis) vcc value inconsistent", 2, nvcc, nV);

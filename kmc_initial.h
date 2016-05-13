@@ -27,22 +27,29 @@ class class_initial{
 			cout << "\n####### Generating configuration... #######" << endl;
             if(par_isrestart){
 				cout << "RESTART FROM restart file..." << endl;
-				if(nArg != 2) error(0, "when restart flag is true, nArg must be 2");
-				
-				read_restart(name_restart, ts_bg, time_bg);
-				
+				if(par_isreshis){
+                    if(nArg != 1) error(0, "when restart from his, nArg must be 1");
+                    read_res_his(ts_bg, time_bg);
+                }
+                else{
+                    if(nArg != 2) error(0, "when restart flag is true, nArg must be 2");
+				    read_restart(name_restart, ts_bg, time_bg);
+                }
+
 			    his_sol = fopen(par_name_sol,  "a");
 			    his_def = fopen(par_name_def,  "a");
 			    his_srf = fopen(par_name_srf,  "a");
 			    out_engy= fopen(par_name_engy, "a");
 			    out_vdep= fopen(par_name_vdep, "a");
+			    out_eSGC= fopen(par_name_eSGC, "a");
+			    out_sro = fopen(par_name_sro,  "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
             }
 			else{
 				cout << "START FROM a random configuration..." << endl;
 				ts_bg= 0; time_bg= 0;
 				
-				init_states_array(par_compV, par_compA, par_nMlayer);
+				init_states_array();
 				write_conf();
 				cout << "Output t0 conf files" << endl;
 				
@@ -51,6 +58,8 @@ class class_initial{
 			    his_srf = fopen(par_name_srf,  "w");
 			    out_engy= fopen(par_name_engy, "w");
 			    out_vdep= fopen(par_name_vdep, "w");
+			    out_eSGC= fopen(par_name_eSGC, "w");
+			    out_sro = fopen(par_name_sro,  "w");
                 cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
@@ -59,7 +68,7 @@ class class_initial{
 			if(NULL==out_engy) error(2, "(class_events) the          energy file was not opened!");
 			if(NULL==out_vdep) error(2, "(class_events) the          vdepth file was not opened!");
 		
-			sum_mag= 2*nAA + 1*nA -1*nB -2*nBB;
+			mag= 2*nAA + 1*nA -1*nB -2*nBB;
 
 			init_par();
 			init_uncorrH();
@@ -70,8 +79,9 @@ class class_initial{
 
 		// functions
 		void ltc_constructor();
-		void init_states_array(double compV, double compA, int nMlayer);
+		void init_states_array();
 		void read_restart(char name_restart[], long long int &ts_initial, double &time_initial);
+        void read_res_his(long long int &ts_initial, double &time_initial); // read restart from history.sol
 		void init_par();
 		void init_uncorrH();
 };

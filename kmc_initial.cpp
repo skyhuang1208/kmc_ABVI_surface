@@ -64,33 +64,24 @@ void class_initial::ltc_constructor(){
 	}
 }
 
-void class_initial::init_states_array(double compV, double compA, int nMlayer){
+void class_initial::init_states_array(){
 	// STATE 0: vacancy, 1: A atom, -1: B atom, 4: Vacuum
 
-    double pV, pA;
-    bool is_1vcc; // if compV>1, is 1 vcc
-    if(compV >1.0){ is_1vcc= true;  pV= 0;     pA= compA; }
-    else          { is_1vcc= false; pV= compV; pA= compA*(1-compV); }
-
-    for(int i=0; i<nx; i ++){	
-	    for(int j=0; j<ny; j ++){	
-	        for(int k=0; k<nz; k ++){
-                if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4;
-		        else{
-			            double ran= ran_generator();
-
-                        if(ran < pV)                states[i][j][k]= 0;
-                        else if(ran < (pV+pA))      states[i][j][k]= 1;
-			            else                        states[i][j][k]=-1;
-		        }
-    }}}
-    if(is_1vcc){
-        states[nx/2][ny/2][nz/2]= 0; 
-        cout << "compV gt 1: only 1 vcc\n";
+    for(int i=0; i<nx; i ++) // fill system with A
+	    for(int j=0; j<ny; j ++)	
+	        for(int k=0; k<nz; k ++)
+                states[i][j][k]= 1;
+    
+    int count= 0;
+    while(count != par_Nv){
+        int site= ran_generator()*nx*ny*nz;
+        if(*(&states[0][0][0]+site)!=0) count ++;
+        *(&states[0][0][0]+site)= 0;
     }
 
 	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0;
-	////////// CHECK //////////
+	
+    ////////// CHECK //////////
 	for(int i=0; i<nx; i ++){ 
 	    for(int j=0; j<ny; j ++){ 
 	        for(int k=0; k<nz; k ++){ 
@@ -119,10 +110,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
                     default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
 	            }
     }}}
-	if(compV>1 && nV != 1) error(1, "(init_states_array) The number of vacancies is not 1", 2, nV, compV); // delete
-#define TOL 0.01
 	int nAtotal= nA + nB;
-	if(abs((double) nA/nAtotal-compA) > TOL) error(1, "(init_states_array) the composition of generated conf is inconsistent of compA", 1, nA);
 	////////// CHECK //////////
 	
 	cout << "The random solution configuration has been generated!" << endl;
@@ -205,6 +193,47 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 	if_re.close();
 }
 
+void class_initial::read_res_his(long long int &ts_initial, double &time_initial){ // read restart from history.sol
+	ifstream if_his(par_name_sol, ios::in);
+	if(!if_his.is_open()) error(1, "(read_restart) the history.sol is not opened!");
+
+	int ns;
+	double time;
+	long long int timestep;
+    vector <int> sltcp;
+	while(if_his >> ns){
+		if_his.ignore();
+
+	    char c_T[5];
+	    if_his >> c_T >> timestep >> time;
+        if(strcmp(c_T, "T:") !=0) error(1, "(read_restart) not T: on second line"); // check
+
+        sltcp.clear();
+        for(int a=0; a<ns; a ++){
+            int data;
+            if_his >> data;
+            sltcp.push_back(data);
+        }
+    }
+	ts_initial= timestep;
+    time_initial= time;
+
+    for(int i=0; i<nx; i ++) 
+        for(int j=0; j<ny; j ++) 
+            for(int k=0; k<nz; k ++) states[i][j][k]= 1;
+    for(int a=0; a<ns; a ++) *(&states[0][0][0]+sltcp[a])= -1;
+	
+    nA= nx*ny*nz - ns; nB= ns; nV= 0; nAA= 0; nAB= 0; nBB= 0;
+    cout << "Restart from history file (!! Warning: AB system only !!)" << endl;
+	cout << "Vacancy: " << nV << endl;
+	cout << "Atype A: " << nA << ", pct: " << 100* (double)nA/(nx*ny*nz) << "%" << endl;
+	cout << "Atype B: " << nB << ", pct: " << 100* (double)nB/(nx*ny*nz) << "%" << endl;
+	cout << " Itl AA: " << nAA << endl;
+	cout << " Itl AB: " << nAB << endl;
+	cout << " Itl BB: " << nBB << endl;
+
+    if_his.close();
+}
 
 void class_initial::init_par(){
 	// 1st-nn class 1
@@ -326,8 +355,8 @@ void class_initial::init_par(){
 	cout << "\n##### Energy calculation parameters #####" << endl; 
 	
 	cout << "temperature= " << temp << ", beta= " << beta << endl;
-	printf("Vacancy mu= %f %f\n", muvA, muvB);
-	printf("Interstitial mu= %f %f\n", muiA, muiB);
+	printf("Vacancy nu= %f %f\n", nuvA, nuvB);
+	printf("Interstitial nu= %f %f\n", nuiA, nuiB);
 	printf("Vacancy Em= %f %f\n", emvA, emvB);
 	printf("Interstitial Em= %f %f\n", emiA, emiB);
 	printf("Rotation Er(AA, AB, BB)= %f %f %f\n", erAA, erAB, erBB);
