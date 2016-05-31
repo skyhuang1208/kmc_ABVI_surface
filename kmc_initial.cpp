@@ -13,6 +13,9 @@ void class_initial::ltc_constructor(){
 	double (*ptr_vbra)[3]; 
 	int   (*ptr_v1nbr)[3];
 	int   (*ptr_v2nbr)[3];
+	int   (*ptr_v3nbr)[3];
+    int    *ptr_v1sp;
+    int    *ptr_v2sp;
 			
 	// coordinate vectors of bravais lattices
 		
@@ -24,7 +27,28 @@ void class_initial::ltc_constructor(){
 	
     int   v2nbr_bcc[6][3]= {{ 0,  1,  1}, { 1,  0,  1}, { 1,  1,  0},
                             { 0, -1, -1}, {-1,  0, -1}, {-1, -1,  0}};
-	
+
+    int v1sp_bcc[8][6][3]= {{{ 0,-1,-1}, { 0,-1, 0}, { 0, 0,-1}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}},
+                            {{-1, 0,-1}, {-1, 0, 0}, { 0, 0,-1}, {0, 1, 1}, {1, 1, 0}, {1, 1, 1}},
+                            {{-1,-1, 0}, {-1, 0, 0}, { 0,-1, 0}, {0, 1, 1}, {1, 0, 1}, {1, 1, 1}},
+                            {{ 0, 0, 1}, { 0, 1, 0}, { 0, 1, 1}, {1, 0, 0}, {1, 0, 1}, {1, 1, 0}},
+                            {{-1,-1,-1}, {-1,-1, 0}, {-1, 0,-1}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}},
+                            {{-1,-1,-1}, {-1,-1, 0}, { 0,-1,-1}, {0, 0, 1}, {1, 0, 0}, {1, 0, 1}},
+                            {{-1,-1,-1}, {-1, 0,-1}, { 0,-1,-1}, {0, 1, 0}, {1, 0, 0}, {1, 1, 0}},
+                            {{-1,-1, 0}, {-1, 0,-1}, {-1, 0, 0}, {0,-1,-1}, {0,-1, 0}, {0, 0,-1}}};
+
+    int v2sp_bcc[8][6][3]= {{{-1,-1,-1}, { 0, 0, 1}, { 0, 1, 0}, {1,-1, 0}, {1, 0,-1}, {2, 1, 1}},
+                            {{-1,-1,-1}, {-1, 1, 0}, { 0, 0, 1}, {0, 1,-1}, {1, 0, 0}, {1, 2, 1}},
+                            {{-1,-1,-1}, {-1, 0, 1}, { 0,-1, 1}, {0, 1, 0}, {1, 0, 0}, {1, 1, 2}},
+                            {{-1, 0, 0}, { 0,-1, 0}, { 0, 0,-1}, {1, 1, 2}, {1, 2, 1}, {2, 1, 1}},
+                            {{-2,-1,-1}, {-1, 0, 1}, {-1, 1, 0}, {0,-1, 0}, {0, 0,-1}, {1, 1, 1}},
+                            {{-1,-2,-1}, {-1, 0, 0}, { 0,-1, 1}, {0, 0,-1}, {1,-1, 0}, {1, 1, 1}},
+                            {{-1,-1,-2}, {-1, 0, 0}, { 0,-1, 0}, {0, 1,-1}, {1, 0,-1}, {1, 1, 1}},
+                            {{-2,-1,-1}, {-1,-2,-1}, {-1,-1,-2}, {0, 0, 1}, {0, 1, 0}, {1, 0, 0}}};
+
+    int  v3nbr_bcc[12][3]= {{ 2, 1, 1}, { 1, 2, 1}, { 1, 1, 2}, { 1, 0,-1}, { 1,-1, 0}, {0, 1,-1},
+                            {-2,-1,-1}, {-1,-2,-1}, {-1,-1,-2}, {-1, 0, 1}, {-1, 1, 0}, {0,-1, 1}};
+    
     // FCC
 	double vbra_fcc[3][3]= {{0.5, 0.5, 0}, {0.5, 0, 0.5}, {0, 0.5, 0.5}};
 
@@ -36,7 +60,14 @@ void class_initial::ltc_constructor(){
 
 	// Choose ltc structure
 	if     (strcmp(type_ltc, "SC ")==0){}
-	else if(strcmp(type_ltc, "BCC")==0){ptr_vbra= vbra_bcc;	n1nbr= 8; ptr_v1nbr= v1nbr_bcc; n2nbr= 6; ptr_v2nbr= v2nbr_bcc;}
+	else if(strcmp(type_ltc, "BCC")==0){
+        ptr_vbra= vbra_bcc;	
+        n1nbr= 8; ptr_v1nbr= v1nbr_bcc; 
+        n2nbr= 6; ptr_v2nbr= v2nbr_bcc; 
+        n3nbr=12; ptr_v3nbr= v3nbr_bcc; 
+        n1sp= 6; ptr_v1sp= &v1sp_bcc[0][0][0]; 
+        n2sp= 6; ptr_v2sp= &v2sp_bcc[0][0][0];
+    }
 	else if(strcmp(type_ltc, "FCC")==0){ptr_vbra= vbra_fcc; n1nbr=12; ptr_v1nbr= v1nbr_fcc; n2nbr= 6; ptr_v2nbr= v2nbr_fcc;}
 	else if(strcmp(type_ltc, "HCP")==0){}
 	else	error(1, "(ltc_constructor) coldn't match the lattice type", type_ltc);
@@ -49,17 +80,16 @@ void class_initial::ltc_constructor(){
 	for(int i=0; i<n1nbr; i ++){ // v1nbr
 		for(int j=0; j<3; j ++){
 			v1nbr[i][j]= (*(ptr_v1nbr+i))[j];
-			
-            if(i>=n1nbr/2)
-				if(v1nbr[i][j] != -v1nbr[i-n1nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
+            if(i>=n1nbr/2) if(v1nbr[i][j] != -v1nbr[i-n1nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
+
+            for(int k=0; k<n1sp; k ++) v1sp[i][k][j]= *(ptr_v1sp+i*n1sp*3+k*3+j);
+            for(int k=0; k<n2sp; k ++) v2sp[i][k][j]= *(ptr_v2sp+i*n2sp*3+k*3+j);
 		}
 	}
 	for(int i=0; i<n2nbr; i ++){ // v2nbr
 		for(int j=0; j<3; j ++){
 			v2nbr[i][j]= (*(ptr_v2nbr+i))[j];
-			
-            if(i>=n2nbr/2)
-				if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
+            if(i>=n2nbr/2) if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
 		}
 	}
 }
@@ -187,7 +217,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 			
 			if	(type== 2) nAA ++;
 			else if (type==-2) nBB ++;
-			else if (type== 3){nAB ++; type= 0; *(&itlAB[0][0][0]+index)= true;}
+			else if (type== 3) nAB ++;
 		}
 
 		*(&states[0][0][0]+index)= type;

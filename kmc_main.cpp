@@ -35,7 +35,8 @@ int main(int nArg, char *Arg[]){
 
 		// OUTPUT DATA
 		if(0==timestep%step_log){
-			printf("\n%lld %.10e %d     %d %d     %d %d %d %d     %f %f    %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, 
+            cout << endl;
+			printf("%lld %.10e %d     %d %d     %d %d %d %d     %f %f    %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, 
                                                         ((double) Vja[0])/(Vja[0]+Vja[1]), ((double) Ija[0])/(Ija[0]+Ija[1]), events.cvcc_rates);
 			if(N_0def != 0){
 				cout << "  *** 0-defect genr: " << N_0def << " ***"; 
@@ -50,7 +51,9 @@ int main(int nArg, char *Arg[]){
         }
 
 		if(0==timestep%step_out){
-			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
+			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range());
+            fflush(out_engy);
+			fprintf(out_sro,  "%lld %e %f\n", timestep, totaltime, cal_sro());
             write_vdep();
         }
 		
@@ -63,10 +66,6 @@ int main(int nArg, char *Arg[]){
 	// finalizing
 	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
 	write_conf(); cout << "<Output conf files at: " << timestep << ">";
-	if(timestep%step_out != 0){
-        fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_whole());
-        write_vdep();
-    }
     
     for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
     cout << "\n## vcc creation from srf ##" << endl;

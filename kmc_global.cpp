@@ -14,23 +14,26 @@ long long int timestep;
 double totaltime;
 
 #define MAX_NNBR 20
-int n1nbr, n2nbr;	// number of neighbors
-int v1nbr[MAX_NNBR][3];	// indexes vectors of 1st neighbors
-int v2nbr[MAX_NNBR][3];	// indexes vectors of 2nd neighbors
+int n1nbr, n2nbr, n3nbr; // number of neighbors
+int v1nbr[MAX_NNBR][3];	 // indexes vectors of 1st neighbors
+int v2nbr[MAX_NNBR][3];	 // indexes vectors of 2nd neighbors
+int v3nbr[MAX_NNBR][3];	 // indexes vectors of 3rd neighbors
 double vbra[3][3];	// coordinate vectors of bravice lattice
+int n1sp, n2sp;
+int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
+int v2sp[MAX_NNBR][MAX_NNBR][3];
 
 int nA, nB, nV, nAA, nBB, nAB, nM;
 int sum_mag; // sum of magnitization; should be conserved
 int  states[nx][ny][nz];
-bool  itlAB[nx][ny][nz]= {false};
 bool    srf[nx][ny][nz]= {false};
-bool marker[nx][ny][nz]= {false}; // mark V or M recb with I that calculated (inside ircal) and atoms that near a V and an I (from ircal to vrcal)
 
 FILE * his_sol;		// history file of solute atoms
 FILE * his_def;		// history file of defects
 FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
 FILE * out_vdep;
+FILE * out_sro;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
@@ -149,7 +152,7 @@ void write_conf(){
 				    if(srf[i][j][k]) of_ltcp << "1" << endl;
                     else             of_ltcp << "0" << endl;
                 }
-				else if (0==states[i][j][k] && (! itlAB[i][j][k])){
+				else if (0==states[i][j][k]){
 					int id; for(id=0; id<list_vcc.size() && list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
 					
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
@@ -165,7 +168,6 @@ void write_conf(){
 					int id; for(id=0; list_itl[id].ltcp != i*ny*nz+j*nz+k; id ++);
 
 					int type= states[i][j][k];
-					if(0==type) type= 3;
 					of_xyz  << type << " " << x << " " << y << " " << z << " " << endl; 
 					of_ltcp << type << " " << i << " " << j << " " << k << " "
 						<< list_itl[id].ix << " " << list_itl[id].iy << " " << list_itl[id].iz << " "
@@ -205,8 +207,10 @@ void write_hissol(){
 	}
 
 	if(ncheck != nB) error(0, "(write_hissol) nB inconsistent", 2, ncheck, nB); // delete it
-}
 
+    fflush(his_sol);
+    fflush(his_srf);
+}
 
 void write_hisdef(){
 	// OUTPUT his_def
@@ -218,9 +222,10 @@ void write_hisdef(){
 	}
 	for(int i=0; i<list_itl.size(); i++){
 		int type= *(&states[0][0][0]+list_itl[i].ltcp);
-		if(0==type) type= 3;
 		fprintf(his_def, "%d %d %d %d %d\n", type, list_itl[i].ltcp, list_itl[i].ix, list_itl[i].iy, list_itl[i].iz);
 	}
+    
+    fflush(his_def);
 }
 
 void write_vdep(){
@@ -237,27 +242,68 @@ void write_vdep(){
         fprintf(out_vdep, "%d ", n);
     }
     fprintf(out_vdep, "\n");
+
+    fflush(out_vdep);
 }
 
-void write_metrohis(){
-	int nsol= 0;
-	int nvcc= 0;
-    
-    fprintf(his_sol, "%d\n", nB);
-	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
-    fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
-	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
-	for(int i=0; i<nx*ny*nz; i++){
-		if( -1== *(&states[0][0][0]+i) ){
-			nsol ++;
-			fprintf(his_sol, "%d\n", i);
-		}
-		if(  0== *(&states[0][0][0]+i) ){
-            nvcc ++;
-		    fprintf(his_def, "0 %d 0 0 0\n", i);
+int cal_Bnbr(int N_Bnbr, int x, int y, int z){
+    if(0==N_Bnbr){
+        int n= 0;
+        if(-1==states[x][y][z]) n ++;
+        for(int a=0; a<n1nbr; a ++){ // search 1st-nn for B
+		    int x1= pbc(x+(*(v1nbr+a))[0], nx);
+		    int y1= pbc(y+(*(v1nbr+a))[1], ny);
+		    int z1= pbc(z+(*(v1nbr+a))[2], nz);
+		    if(-1==states[x1][y1][z1]) n ++;
+	    }
+	    for(int b=0; b<n2nbr; b ++){ // search 2nd-nn for B
+		    int x2= pbc(x+(*(v2nbr+b))[0], nx);
+		    int y2= pbc(y+(*(v2nbr+b))[1], ny);
+		    int z2= pbc(z+(*(v2nbr+b))[2], nz);
+		    if(-1==states[x2][y2][z2]) n ++;
         }
-	}
+
+        return n;
+    }
+    else return N_Bnbr;
+}
+
+double cal_sro(){
+    double cA= nA*1.0/(nx*ny*nz);
+    double sro= 0;
+
+    int ncheck= 0;
+	for(int i=0; i<nx; i ++){
+		for(int j=0; j<ny; j ++){
+			for(int k=0; k<nz; k ++){
+				int state0= states[i][j][k];
+
+                if(-1==state0){
+                    ncheck ++;
+                    int nAnbr= 0;
+
+				    for(int a=0; a<n1nbr; a ++){ // 1st neighbors
+					    int x= pbc(i+(*(v1nbr+a))[0], nx);
+					    int y= pbc(j+(*(v1nbr+a))[1], ny);
+					    int z= pbc(k+(*(v1nbr+a))[2], nz);
+                        int state1= states[x][y][z];
+
+                        if(1==state1) nAnbr ++;
+                    }
+				    
+                    for(int a=0; a<n2nbr; a ++){ // 1st neighbors
+					    int x= pbc(i+(*(v2nbr+a))[0], nx);
+					    int y= pbc(j+(*(v2nbr+a))[1], ny);
+					    int z= pbc(k+(*(v2nbr+a))[2], nz);
+                        int state1= states[x][y][z];
+
+                        if(1==state1) nAnbr ++;
+                    }
+
+                    sro += 1.0 - nAnbr*1.0/(n1nbr+n2nbr)/cA;
+                }
+    }}}
     
-    if(nsol != nB) error(2, "(write_metrohis) sol value inconsistent", 2, nsol, nB);
-    if(nvcc != nV) error(2, "(write_metrohis) vcc value inconsistent", 2, nvcc, nV);
+    if(ncheck != nB) error(2, "(cal_sro) number inconsistent", 2, ncheck, nB);
+    return sro/nB;
 }

@@ -12,10 +12,14 @@ extern double totaltime;
 
 // ltc variables
 #define MAX_NNBR 20
-extern int n1nbr, n2nbr;	// number of neighbors
+extern int n1nbr, n2nbr, n3nbr;	// number of neighbors
 extern int v1nbr[MAX_NNBR][3];	// indexes vectors of 1st neighbors
 extern int v2nbr[MAX_NNBR][3];	// indexes vectors of 2nd neighbors
+extern int v3nbr[MAX_NNBR][3];	// indexes vectors of 3rd neighbors
 extern double vbra[3][3];	// coordinate vectors of bravice lattice
+extern int n1sp, n2sp;
+extern int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
+extern int v2sp[MAX_NNBR][MAX_NNBR][3];
 
 // System
 const int nx=  par_nx;
@@ -25,9 +29,7 @@ const int x_sink= (int) (nx/2);
 extern int nA, nB, nV, nAA, nBB, nAB, nM;
 extern int sum_mag; // sum of magnitization; should be conserved
 extern int  states[nx][ny][nz];
-extern bool  itlAB[nx][ny][nz];
 extern bool    srf[nx][ny][nz];
-extern bool marker[nx][ny][nz]; // mark V or M recb with I that calculated (inside ircal) and atoms that near a V and an I (from ircal to vrcal)
 
 // Files
 extern FILE * his_sol;		// history file of solute atoms
@@ -35,10 +37,13 @@ extern FILE * his_def;		// history file of vacancies and interstitials: record e
 extern FILE * his_srf;		// history file of surface atoms 
 extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
+extern FILE * out_sro;		// out file of sro
 
 // Parameters for mechanisms
-const double dis_rec=  par_dis_rec;	// recombination distance
+const double dis_rec=   par_dis_rec; // recombination distance
+const bool   is_genr=   par_isgenr;
 const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
+const double corrfac=   par_corrfac;
 
 // Defect lists
 struct vcc{ // information of an vacancy
@@ -64,10 +69,12 @@ extern long long int Vja[2], Ija[2];
 const double temp= par_temp; 
 const double beta= par_beta;
 
-const double muvA= par_muvA; 
-const double muvB= par_muvB; 
-const double muiA= par_muiA; 
-const double muiB= par_muiB; 
+const double muvA=  par_muvA; 
+const double muvB=  par_muvB; 
+const double muiA=  par_muiA; 
+const double muiB=  par_muiB; 
+const double muiAA= par_muiAA;
+const double muiAB= par_muiAB;
 
 const double emvA= par_emvA;
 const double emvB= par_emvB;
@@ -85,6 +92,19 @@ const double eciBBtAB= par_eciBBtAB; // !!!
 const double erAA= par_erAA; // rotation energy barrier
 const double erAB= par_erAB;
 const double erBB= par_erBB;
+
+const double eSPA1A= par_eSPA1A;
+const double eSPA1B= par_eSPA1B;
+const double eSPA1V= par_eSPA1V;
+const double eSPB1A= par_eSPB1A;
+const double eSPB1B= par_eSPB1B;
+const double eSPB1V= par_eSPB1V;
+const double eSPA2A= par_eSPA2A;
+const double eSPA2B= par_eSPA2B;
+const double eSPA2V= par_eSPA2V;
+const double eSPB2A= par_eSPB2A;
+const double eSPB2B= par_eSPB2B;
+const double eSPB2V= par_eSPB2V;
 
 // Ising model energy constants
 extern double h0;
@@ -112,5 +132,7 @@ void write_hisdef();
 void write_metrohis();
 void write_rcvcc();
 void write_vdep(); // record how far created vcc go
+int cal_Bnbr(int N_Bnbr, int x, int y, int z);
+double cal_sro();
 
 #endif // KMC_GLOBAL_INCLUDED

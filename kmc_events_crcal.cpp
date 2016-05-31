@@ -56,23 +56,22 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
                 if(4==states[x][y][z]){
                     count_AM ++;
 
-			        double e0= cal_energy(false, i, j, k, x, y, z);
+                    double e0= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z);
 
 			        states[x][y][z]= states[i][j][k];
                     states[i][j][k]= 0;
 
-                    double ediff= cal_energy(false, i, j, k, x, y, z) - e0;
+		            double ediff= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z) - e0; 
 
 				    states[i][j][k]= states[x][y][z];
 				    states[x][y][z]= 4;
 			
 				    cvcc[ltcp].mltcp.push_back(ltcp2);
                     cvcc[ltcp].rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
-                    if((em+0.5*ediff)<0) error(2, "(cal_rateC) minus e in creation of vcc", 1, em+0.5*ediff); // delete it
+                    if((em+0.5*ediff)<0) error(2, "(update_ratesC) minus e in creation of vcc", 1, em+0.5*ediff); // delete it
 				
 				    rate_temp += cvcc[ltcp].rates.back();
                 }
-                
 		    }
 
             if(double( count_AM) > RATIO_NOCVCC * n1nbr) cvcc.erase(ltcp);

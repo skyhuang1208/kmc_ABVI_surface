@@ -36,6 +36,7 @@ class class_initial{
 			    his_srf = fopen(par_name_srf,  "a");
 			    out_engy= fopen(par_name_engy, "a");
 			    out_vdep= fopen(par_name_vdep, "a");
+			    out_sro = fopen(par_name_sro,  "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
             }
 			else{
@@ -51,6 +52,7 @@ class class_initial{
 			    his_srf = fopen(par_name_srf,  "w");
 			    out_engy= fopen(par_name_engy, "w");
 			    out_vdep= fopen(par_name_vdep, "w");
+			    out_sro = fopen(par_name_sro,  "w");
                 cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
