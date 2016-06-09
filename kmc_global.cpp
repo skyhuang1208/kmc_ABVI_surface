@@ -37,6 +37,7 @@ FILE * out_sro;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
+vector <int> list_sink;
 
 int N_genr= 0;
 int njump[10]= {0};

@@ -60,6 +60,7 @@ struct itl{ // information of an interstitial; can declare a vector to store all
 };
 extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
+extern vector <int> list_sink;  // A list contains atoms in the sink
 
 extern int N_genr;
 extern int njump[10];
@@ -96,15 +97,19 @@ const double erBB= par_erBB;
 const double eSPA1A= par_eSPA1A;
 const double eSPA1B= par_eSPA1B;
 const double eSPA1V= par_eSPA1V;
+const double eSPA1M= par_eSPA1M;
 const double eSPB1A= par_eSPB1A;
 const double eSPB1B= par_eSPB1B;
 const double eSPB1V= par_eSPB1V;
+const double eSPB1M= par_eSPB1M;
 const double eSPA2A= par_eSPA2A;
 const double eSPA2B= par_eSPA2B;
 const double eSPA2V= par_eSPA2V;
+const double eSPA2M= par_eSPA2M;
 const double eSPB2A= par_eSPB2A;
 const double eSPB2B= par_eSPB2B;
 const double eSPB2V= par_eSPB2V;
+const double eSPB2M= par_eSPB2M;
 
 // Ising model energy constants
 extern double h0;

@@ -30,7 +30,7 @@ double class_events::main(){
 
     // check
     if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz); // check
-    if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
+//    if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
     // perform the actual jump
 	double ran= ran_generator();
@@ -42,7 +42,7 @@ double class_events::main(){
                 double rate_a= (it->second).rates[a];
                 if( (ran >= acc_cr) && (ran < (acc_cr + rate_a/sum_rates) ) ){
                     create_vcc(it->first, (it->second).mltcp[a]); 
-                    break;
+                    goto actionDONE;
                 }
                         
                 acc_cr += rate_a/sum_rates;
@@ -55,17 +55,19 @@ double class_events::main(){
             if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
 		        switch(etype[i]){
                     case 0:  actual_jumpI(ilist[i], inbr[i]); recb_checki(ilist[i]); break;
-			        case 1:  actual_jumpV(ilist[i], inbr[i]); recb_checkv(ilist[i]); break;
+			        case 1:  actual_jumpV(ilist[i], inbr[i]); break;
                     case 7:  genr(); N_genr ++; break;
                     default: error(2, "(main) an unknown event type", 1, etype[i]);
                 }
-                break;
+                
+                goto actionDONE;
             }
 		    
             acc_rate += rates[i]/sum_rates;
         }
     }
-	    
+
+actionDONE:
     return 1.0/sum_rates;
 }
 
@@ -106,6 +108,8 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
     	if((z-zv)>nz/2) list_vcc[vid].iz --; if((z-zv)<-nz/2) list_vcc[vid].iz ++;
     
         if(list_vcc[vid].njump != -1) list_vcc[vid].njump ++;
+        
+        recb_checkv(vid);
     }
     
     if(nM>0){ // update srf & creation
@@ -148,7 +152,7 @@ void class_events::actual_jumpI(int iid, int inbr){
 	if((x-xi)>nx/2) list_itl[iid].ix --; if((x-xi)<-nx/2) list_itl[iid].ix ++;
 	if((y-yi)>ny/2) list_itl[iid].iy --; if((y-yi)<-ny/2) list_itl[iid].iy ++;
 	if((z-zi)>nz/2) list_itl[iid].iz --; if((z-zi)<-nz/2) list_itl[iid].iz ++;
-    
+
     if(nM>0){ // update srf & creation
         srf_check(x, y, z);
         srf_check(xi, yi, zi);
@@ -182,7 +186,7 @@ void class_events::create_vcc(int altcp, int mltcp){
 	int xm= (int) (mltcp/nz)/ny; int ym= (int) (mltcp/nz)%ny; int zm= (int) mltcp%nz;
     srf_check(xa, ya, za);
     srf_check(xm, ym, zm);
-    recb_checkv(vid);
     cvcc_rates += update_ratesC(altcp);
     cvcc_rates += update_ratesC(mltcp);
+    recb_checkv(vid);
 }

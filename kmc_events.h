@@ -11,20 +11,22 @@ class class_events{
 	public:
 		class_events(){
 			cout << "##Generation parameters (rate_genr) " << rate_genr << " (damage/s)" << endl;
-			cout << "##Recombination parameters: 2nd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
+			cout << "##Recombination parameters: 3rd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
 		
-            cvcc_rates= init_ratesC();
-
             // create v12nbr
 			for(int a=0; a<n1nbr; a ++) // 1st neighbors
 			    v12nbr.push_back({ (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
 			for(int a=0; a<n2nbr; a ++) // 2nd neighbors
 			    v12nbr.push_back({ (*(v2nbr+a))[0], (*(v2nbr+a))[1], (*(v2nbr+a))[2] });
+            
+            cvcc_rates= init_ratesC();
+            N_nediff= 0;
         }
 		
         // variables
         double cvcc_rates;
-		
+        int N_nediff;
+
         // functions
 		double main();
         double ecal_range(int xlo=0, int xhi=nx-1, int ylo=0, int yhi=ny-1, int zlo=0, int zhi=nz-1, bool is_corr= false);
@@ -68,14 +70,15 @@ class class_events{
 		double cal_ratesI(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &jatom);
 		double cal_ratesV(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &jatom);
         double cal_ratesVsp(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &jatom);
-        double update_ratesC(int ltcp_in); // update rates of vcc creation at srf
+        double update_ratesC(int ltcp_in, bool is_recb= false); // update rates of vcc creation at srf
         double init_ratesC();
 		
         ///// functions for recombination /////
         void rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv);
         bool recb_checki(int id);
-        bool recb_checkv(int id, bool isB= false);
+        bool recb_checkv(int id);
         void srf_check(int i, int j, int k);
+        void sink(bool isvcc, int index); // execute the sink
 };
 
 #endif // KMC_EVENTS_INCLUDED

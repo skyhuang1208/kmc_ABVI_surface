@@ -31,7 +31,14 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
         recb_checki(ii);
     }
     else{
-	    if(states[xv][yv][zv] != 0 && states[xv][yv][zv] != 4) error(2, "(rules_recb) the vcc isnt 0 or 4", 1, states[xv][yv][zv]);
+        if(4==states[xv][yv][zv]) nM --;
+        else if(0==states[xv][yv][zv]){
+            nV --;
+            list_vcc.erase(list_vcc.begin()+iv);
+        }
+        else error(2, "(rules_recb) the vcc isnt 0 or 4", 1, states[xv][yv][zv]);
+
+        double e1, e2;
         switch(states[xi][yi][zi]){
 		    case 2: // AA
 			    nAA --; nA +=2;
@@ -42,10 +49,10 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
 			    nAB --; nA ++; nB ++;
 	            states[xi][yi][zi]= 1;
 	            states[xv][yv][zv]=-1;
-                double e1= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
+                e1= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
 	            states[xi][yi][zi]=-1;
 	            states[xv][yv][zv]= 1;
-                double e2= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
+                e2= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
                 if(e1<e2){
 	                states[xi][yi][zi]= 1;
 	                states[xv][yv][zv]=-1;
@@ -56,15 +63,11 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
 			
 	    list_itl.erase(list_itl.begin()+ii);
     
-        if(4==states[xv][yv][zv]) nM --;
-        else{
-            nV --;
-            list_vcc.erase(list_vcc.begin()+iv);
-        }
-
         if(nM !=0){
             srf_check(xi, yi, zi);
             srf_check(xv, yv, zi);
+            cvcc_rates += update_ratesC(xi*ny*nz+yi*nz+zi, true);
+            cvcc_rates += update_ratesC(xv*ny*nz+yv*nz+zv, true);
         }
     }
 }
@@ -77,9 +80,13 @@ bool class_events::recb_checki(int id){
     int i= (int) (ltcp/nz)/ny;
 	int j= (int) (ltcp/nz)%ny;
 	int k= (int)  ltcp%nz;
+    if(i==x_sink){ // check if at sink
+        sink(false, id);
+        return true;
+    }
     int stateI= states[i][j][k];
+    
     int x, y, z;
-
 	for(int a=0; a<n1nbr; a ++){
         x= pbc(i+v1nbr[a][0], nx);
 		y= pbc(j+v1nbr[a][1], ny);
@@ -94,7 +101,7 @@ bool class_events::recb_checki(int id){
 		y= pbc(j+v2nbr[a][1], ny);
 		z= pbc(k+v2nbr[a][2], nz);
         if(0==states[x][y][z] || 4==states[x][y][z]) list_recb.push_back({x, y, z});
-        if(-1==states[x][y][z] && 2==stateI)         list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
+//        if(-1==states[x][y][z] && 2==stateI)         list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
     }
     if(list_recb.size() !=0) goto letsRECB;
 	
@@ -122,29 +129,27 @@ letsRECB: // recb
     y= list_recb[ran].at(1);
     z= list_recb[ran].at(2);
     rules_recb(id, i, j, k, -1, x, y, z); // vccID is unknown, give -1
-    if(3==stateI) recb_checkv(x*ny*nz + y*nz + z, true);
     return true;
 }
 
-bool class_events::recb_checkv(int id, bool isB){
+bool class_events::recb_checkv(int id){
     vector<vector<int>> list_recb;
-    vector<vector<int>> list_AAtoAB;
     
-    int ltcp;
-    if(isB) ltcp= id;
-    else    ltcp= list_vcc[id].ltcp;
+    int ltcp= list_vcc[id].ltcp;
     int i= (int) (ltcp/nz)/ny;
 	int j= (int) (ltcp/nz)%ny;
 	int k= (int)  ltcp%nz;
-    if(isB && states[i][j][k] != -1) error(2, "(recb_checkv) isB but not -1", 1, states[i][j][k]);
+    if(i==x_sink){ // check if at sink
+        sink(true, id);
+        return true;
+    }
+    
     int x, y, z;
-
 	for(int a=0; a<n1nbr; a ++){
         x= pbc(i+v1nbr[a][0], nx);
 		y= pbc(j+v1nbr[a][1], ny);
 		z= pbc(k+v1nbr[a][2], nz);
-        if(! isB && (2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
-        if(isB && 2==states[x][y][z])                           list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
+        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
     }
     if(list_recb.size() !=0) goto letsRECB;
 	
@@ -152,8 +157,7 @@ bool class_events::recb_checkv(int id, bool isB){
         x= pbc(i+v2nbr[a][0], nx);
 		y= pbc(j+v2nbr[a][1], ny);
 		z= pbc(k+v2nbr[a][2], nz);
-        if(! isB && (2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
-        if(isB && 2==states[x][y][z])                           list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
+        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
     }
     if(list_recb.size() !=0) goto letsRECB;
 	
@@ -161,19 +165,11 @@ bool class_events::recb_checkv(int id, bool isB){
         x= pbc(i+v3nbr[a][0], nx);
 		y= pbc(j+v3nbr[a][1], ny);
 		z= pbc(k+v3nbr[a][2], nz);
-        if(! isB && (2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
+        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
     }
     if(list_recb.size() !=0) goto letsRECB;
    
-    if(list_AAtoAB.size() !=0){ // AA+B->A+AB
-        int ran= (int) ran_generator()*list_AAtoAB.size();
-        x= list_AAtoAB[ran].at(0);
-        y= list_AAtoAB[ran].at(1);
-        z= list_AAtoAB[ran].at(2);
-        rules_recb(-1, x, y, z, -1, i, j, k); // AA+B->A+AB
-        return true;
-    }
-    else return false;
+    return false;
 
 letsRECB:
     int ran= (int) ran_generator()*list_recb.size();
@@ -215,6 +211,53 @@ void class_events::srf_check(int i, int j, int k){ // when vacuum changed, check
     }
 }
 
+void class_events::sink(bool isvcc, int index){ // execute the sink
+	int ltcp;
+	double ran;
+	
+	if(isvcc){
+		nV --;
+		ltcp= list_vcc[index].ltcp;
+		list_vcc.erase(list_vcc.begin()+index);
+
+        ran= ran_generator();
+		if(list_sink.size() != 0){
+            int i= (int) ran*list_sink.size();
+			*(&states[0][0][0]+ltcp)= list_sink[i];
+            if(list_sink[i] != 1 && list_sink[i] != -1) error(2, "a atom from sink isnt atom", 1, list_sink[i]);
+			list_sink.erase(list_sink.begin()+i);
+		}
+		else *(&states[0][0][0]+ltcp)= (ran<par_compA) ? 1:-1;
+
+		if(1==*(&states[0][0][0]+ltcp)) nA ++;
+		else                            nB ++;
+	}
+	else{
+		ltcp= list_itl[index].ltcp;
+		list_itl.erase(list_itl.begin()+index);
+		
+		switch(*(&states[0][0][0]+ltcp)){
+			case  2:
+				nAA --;
+				list_sink.push_back(1);
+				*(&states[0][0][0]+ltcp)= 1; nA ++;
+				break;
+			case  3:
+				nAB --;
+				ran= ran_generator();
+				if(ran>0.5){
+					list_sink.push_back(-1);
+					*(&states[0][0][0]+ltcp)= 1; nA ++;
+				}
+				else{
+					list_sink.push_back(1);
+					*(&states[0][0][0]+ltcp)=-1; nB ++;
+				}
+				break;
+			default: error(2, "(sink) an unknown type", 1, *(&states[0][0][0]+ltcp));
+		}
+	}
+}
 // THE functions that have been deleted. To find them please go to ABVI_fixSINK //
 // void class_events::recb_dir(int index){
 // bool class_events::cal_dis(int d1, int d2, int d3){

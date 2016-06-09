@@ -42,6 +42,10 @@ int main(int nArg, char *Arg[]){
 				cout << "  *** 0-defect genr: " << N_0def << " ***"; 
                 N_0def= 0;
 			}
+            if(events.N_nediff != 0){
+				cout << "  *** neg e: " << events.N_nediff << " ***"; 
+                events.N_nediff= 0;
+            }
 		}
 
 		if(0==timestep%step_conf || totaltime>=(N_conf+1)*time_conf){

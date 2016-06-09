@@ -10,8 +10,10 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
 	int pos[2][3]= {{x1, y1, z1}, {x2, y2, z2}};
 	int bonds1[7][7]= {0}; // all shifted +2, e.g., AA: 4, BB: 0, AB: 5
 	int bonds2[7][7]= {0}; // 2nd nn
-    int AB1[25]= {0}; // AB for diff B concentrations for 1st-nn
-    int AB2[25]= {0}; // AB for diff B concentrations for 2nd-nn
+    vector <int> AB1; // AB for diff B concentrations for 1st-nn
+    vector <int> AB2; // AB for diff B concentrations for 2nd-nn
+    vector <int> BV1; // BV (1st-nn)
+    vector <int> BV2; // BV (2nd-nn)
 	
     for(int i=0; i<2; i ++){
 		int xi= pbc(pos[i][0], nx);
@@ -20,7 +22,7 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
         int nBnbr_i= 0;
 		int state_i= states[xi][yi][zi];
 
-        if(4==state_i) error(2, "(ecal_bond) found a vacuum");
+        if(4==state_i) continue;
 
 		for(int a=0; a<n1nbr; a ++){ // 1st neighbors
 			int xj= pbc(xi+(*(v1nbr+a))[0], nx);
@@ -37,9 +39,14 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
             if((-1==state_i && 1==state_j1) || (1==state_i && -1==state_j1)){
                 nBnbr_i = cal_Bnbr(nBnbr_i, xi, yi, zi);
                 nBnbr_j1= cal_Bnbr(nBnbr_j1, xj, yj, zj);
-                
-                AB1[nBnbr_i]  ++;
-                AB1[nBnbr_j1] ++;
+                AB1.push_back(nBnbr_i);
+                AB1.push_back(nBnbr_j1);
+            }
+            if((-1==state_i && 0==state_j1) || (0==state_i && -1==state_j1)){
+                nBnbr_i = cal_Bnbr(nBnbr_i, xi, yi, zi);
+                nBnbr_j1= cal_Bnbr(nBnbr_j1, xj, yj, zj);
+                BV1.push_back(nBnbr_i);
+                BV1.push_back(nBnbr_j1);
             }
 		}
 	
@@ -60,19 +67,24 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
             if((-1==state_i && 1==state_j2) || (1==state_i && -1==state_j2)){
                 nBnbr_i = cal_Bnbr(nBnbr_i, xi, yi, zi);
                 nBnbr_j2= cal_Bnbr(nBnbr_j2, xj, yj, zj);
-                
-                AB2[nBnbr_i]  ++;
-                AB2[nBnbr_j2] ++;
+                AB2.push_back(nBnbr_i);
+                AB2.push_back(nBnbr_j2);
+            }
+            if((-1==state_i && 0==state_j2) || (0==state_i && -1==state_j2)){
+                nBnbr_i = cal_Bnbr(nBnbr_i, xi, yi, zi);
+                nBnbr_j2= cal_Bnbr(nBnbr_j2, xj, yj, zj);
+                BV2.push_back(nBnbr_i);
+                BV2.push_back(nBnbr_j2);
             }
 		}
 	}
   
+    const int locals= n1nbr + n2nbr +1; // local sites
     double e= 0;
-    const double e0AB= ( w0AB + 0.5*(n1nbr*(eA1A+eB1B)+n2nbr*(eA2A+eB2B)) ) / (n1nbr+n2nbr*r21); // constant of eAB
-    const double e1AB= w1AB / (n1nbr+n2nbr*r21);
-    const int    locals= n1nbr + n2nbr +1; // local sites
-    for(int x=1; x<=locals; x ++) e += AB1[x] * (e0AB + e1AB*(x*1.0/locals)); // 1st-nn
-    for(int x=1; x<=locals; x ++) e += AB2[x] * (e0AB + e1AB*(x*1.0/locals))*r21; // 2nd-nn
+    for(int i=0; i < AB1.size(); i ++) e += e0AB+e1AB*(AB1[i]*1.0/locals);
+    for(int i=0; i < AB2.size(); i ++) e += e0AB+e1AB*(AB2[i]*1.0/locals)*r21;
+    for(int i=0; i < BV1.size(); i ++) e += e0BV+e1BV*(BV1[i]*1.0/locals);
+    for(int i=0; i < BV2.size(); i ++) e += e0BV+e1BV*(BV2[i]*1.0/locals)*r21;
     e /= 2; // a bond energy is avg of eAB of 2 atoms
 
     e += 
@@ -80,16 +92,16 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
                           eAB1AB * bonds1[5][5] + eAA1AB * bonds1[5][4] + eA1AB * bonds1[5][3]                       + eAB1B * bonds1[5][1] + eAB1BB * bonds1[5][0] +
 	                      eAA1AB * bonds1[4][5] + eAA1AA * bonds1[4][4] + eAA1A * bonds1[4][3]                       + eAA1B * bonds1[4][1] + eAA1BB * bonds1[4][0] +
 	eM1A * bonds1[3][6] + eA1AB  * bonds1[3][5] + eAA1A  * bonds1[3][4] + eA1A  * bonds1[3][3] + eA1V * bonds1[3][2] + 0                    + eA1BB  * bonds1[3][0] +
-	eM1V * bonds1[2][6]                                                 + eA1V  * bonds1[2][3] + eV1V * bonds1[2][2] + eV1B  * bonds1[2][1]                         +
-	eM1B * bonds1[1][6] + eAB1B  * bonds1[1][5] + eAA1B  * bonds1[1][4] + 0                    + eV1B * bonds1[1][2] + eB1B  * bonds1[1][1] + eB1BB  * bonds1[1][0] +
+	eM1V * bonds1[2][6]                                                 + eA1V  * bonds1[2][3] + eV1V * bonds1[2][2] + 0                                            +
+	eM1B * bonds1[1][6] + eAB1B  * bonds1[1][5] + eAA1B  * bonds1[1][4] + 0                    + 0                   + eB1B  * bonds1[1][1] + eB1BB  * bonds1[1][0] +
 	                      eAB1BB * bonds1[0][5] + eAA1BB * bonds1[0][4] + eA1BB * bonds1[0][3]                       + eB1BB * bonds1[0][1] + eBB1BB * bonds1[0][0] +
 // 2nd-nn
     eM2M * bonds2[6][6]                                                 + eM2A  * bonds2[6][3] + eM2V * bonds2[6][2] + eM2B  * bonds2[6][1]                         + 
 	                      eAB2AB * bonds2[5][5] + eAA2AB * bonds2[5][4] + eA2AB * bonds2[5][3]                       + eAB2B * bonds2[5][1] + eAB2BB * bonds2[5][0] +
 	                      eAA2AB * bonds2[4][5] + eAA2AA * bonds2[4][4] + eAA2A * bonds2[4][3]                       + eAA2B * bonds2[4][1] + eAA2BB * bonds2[4][0] +
 	eM2A * bonds2[3][6] + eA2AB  * bonds2[3][5] + eAA2A  * bonds2[3][4] + eA2A  * bonds2[3][3] + eA2V * bonds2[3][2] + 0                    + eA2BB  * bonds2[3][0] +
-	eM2V * bonds2[2][6]                                                 + eA2V  * bonds2[2][3] + eV2V * bonds2[2][2] + eV2B  * bonds2[2][1]                         +
-	eM2B * bonds2[1][6] + eAB2B  * bonds2[1][5] + eAA2B  * bonds2[1][4] + 0                    + eV2B * bonds2[1][2] + eB2B  * bonds2[1][1] + eB2BB  * bonds2[1][0] +
+	eM2V * bonds2[2][6]                                                 + eA2V  * bonds2[2][3] + eV2V * bonds2[2][2] + 0                                            +
+	eM2B * bonds2[1][6] + eAB2B  * bonds2[1][5] + eAA2B  * bonds2[1][4] + 0                    + 0                   + eB2B  * bonds2[1][1] + eB2BB  * bonds2[1][0] +
 	                      eAB2BB * bonds2[0][5] + eAA2BB * bonds2[0][4] + eA2BB * bonds2[0][3]                       + eB2BB * bonds2[0][1] + eBB2BB * bonds2[0][0];
 	
 	return e;
@@ -97,8 +109,10 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
 
 double class_events::ecal_nonb(int x1, int y1, int z1, int x2, int y2, int z2) const{ // cal non-broken A-B bonds 
     int pos[2][3]= {{x1, y1, z1}, {x2, y2, z2}};
-    int AB1[25]= {0}; // AB for diff B concentrations for 1st-nn
-    int AB2[25]= {0}; // AB for diff B concentrations for 2nd-nn
+    vector <int> AB1; // AB for diff B concentrations for 1st-nn
+    vector <int> AB2; // AB for diff B concentrations for 2nd-nn
+    vector <int> BV1; // BV (1st-nn)
+    vector <int> BV2; // BV (2nd-nn)
 	
     for(int o=0; o<2; o ++){
 		int x0= pbc(pos[o][0], nx);
@@ -126,7 +140,11 @@ double class_events::ecal_nonb(int x1, int y1, int z1, int x2, int y2, int z2) c
                 
                 if((-1==state_i && 1==state_j1) || (1==state_i && -1==state_j1)){
                     nBnbr= cal_Bnbr(nBnbr, xi, yi, zi);
-                    AB1[nBnbr] ++;
+                    AB1.push_back(nBnbr);
+                }
+                if((-1==state_i && 0==state_j1) || (0==state_i && -1==state_j1)){
+                    nBnbr= cal_Bnbr(nBnbr, xi, yi, zi);
+                    BV1.push_back(nBnbr);
                 }
             }
 
@@ -141,18 +159,22 @@ double class_events::ecal_nonb(int x1, int y1, int z1, int x2, int y2, int z2) c
             
                 if((-1==state_i && 1==state_j2) || (1==state_i && -1==state_j2)){
                     nBnbr= cal_Bnbr(nBnbr, xi, yi, zi);
-                    AB2[nBnbr] ++;
+                    AB2.push_back(nBnbr);
+                }
+                if((-1==state_i && 0==state_j2) || (0==state_i && -1==state_j2)){
+                    nBnbr= cal_Bnbr(nBnbr, xi, yi, zi);
+                    BV2.push_back(nBnbr);
                 }
             }
 		}
 	}
 
-    double e= 0;
-    const double e0AB= ( w0AB + 0.5*(n1nbr*(eA1A+eB1B)+n2nbr*(eA2A+eB2B)) ) / (n1nbr+n2nbr*r21); // constant of eAB
-    const double e1AB= w1AB / (n1nbr+n2nbr*r21);
     const int    locals= n1nbr + n2nbr +1; // local sites
-    for(int x=1; x<=locals; x ++) e += AB1[x] * (e0AB + e1AB*(x*1.0/locals)); // 1st-nn
-    for(int x=1; x<=locals; x ++) e += AB2[x] * (e0AB + e1AB*(x*1.0/locals))*r21; // 2nd-nn
+    double e= 0;
+    for(int i=0; i < AB1.size(); i ++) e += e0AB+e1AB*(AB1[i]*1.0/locals);
+    for(int i=0; i < AB2.size(); i ++) e += e0AB+e1AB*(AB2[i]*1.0/locals)*r21;
+    for(int i=0; i < BV1.size(); i ++) e += e0BV+e1BV*(BV1[i]*1.0/locals);
+    for(int i=0; i < BV2.size(); i ++) e += e0BV+e1BV*(BV2[i]*1.0/locals)*r21;
     
     return e/2; // a bond energy is avg of eAB of 2 atoms
 }
@@ -171,6 +193,8 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
 	int bonds2[7][7]= {0}; // 2nd nn
     int AB1[25]= {0}; // AB for diff B concentrations for 1st-nn
     int AB2[25]= {0}; // AB for diff B concentrations for 2nd-nn
+    int BV1[25]= {0}; // BV 1st-nn
+    int BV2[25]= {0}; // BV 2nd-nn
 
 	for(int ii= xlo; ii<= xhi; ii ++){ // includes
 		for(int jj= ylo; jj<= yhi; jj ++){
@@ -181,17 +205,25 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
                 int state0= states[i][j][k];
                 int nBnbr= 0;
 
+                if(4==state0) continue;
+
 				for(int a=0; a<n1nbr; a ++){ // 1st neighbors
 					int x= pbc(i+(*(v1nbr+a))[0], nx);
 					int y= pbc(j+(*(v1nbr+a))[1], ny);
 					int z= pbc(k+(*(v1nbr+a))[2], nz);
 					int state1a= states[x][y][z];
 
+                    if(4==state1a) continue;
+
 					bonds1[state0+2][state1a+2] ++;
                     
                     if((-1==state0 && 1==state1a) || (1==state0 && -1==state1a)){
                         nBnbr= cal_Bnbr(nBnbr, i, j, k);
                         AB1[nBnbr] ++;
+                    }
+                    if((-1==state0 && 0==state1a) || (0==state0 && -1==state1a)){
+                        nBnbr= cal_Bnbr(nBnbr, i, j, k);
+                        BV1[nBnbr] ++;
                     }
 				}
 	
@@ -200,12 +232,18 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
 					int y= pbc(j+(*(v2nbr+b))[1], ny);
 					int z= pbc(k+(*(v2nbr+b))[2], nz);
 					int state1b= states[x][y][z];
+                    
+                    if(4==state1b) continue;
 
 					bonds2[state0+2][state1b+2] ++;
                     
                     if((-1==state0 && 1==state1b) || (1==state0 && -1==state1b)){
                         nBnbr= cal_Bnbr(nBnbr, i, j, k);
                         AB2[nBnbr] ++;
+                    }
+                    if((-1==state0 && 0==state1b) || (0==state0 && -1==state1b)){
+                        nBnbr= cal_Bnbr(nBnbr, i, j, k);
+                        BV2[nBnbr] ++;
                     }
 				}
 	}}}
@@ -223,23 +261,23 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
                           eAB1AB * bonds1[5][5] + eAA1AB * bonds1[5][4] + eA1AB * bonds1[5][3]                       + eAB1B * bonds1[5][1] + eAB1BB * bonds1[5][0] +
 	                      eAA1AB * bonds1[4][5] + eAA1AA * bonds1[4][4] + eAA1A * bonds1[4][3]                       + eAA1B * bonds1[4][1] + eAA1BB * bonds1[4][0] +
 	eM1A * bonds1[3][6] + eA1AB  * bonds1[3][5] + eAA1A  * bonds1[3][4] + eA1A  * bonds1[3][3] + eA1V * bonds1[3][2] + 0                    + eA1BB  * bonds1[3][0] +
-	eM1V * bonds1[2][6]                                                 + eA1V  * bonds1[2][3] + eV1V * bonds1[2][2] + eV1B  * bonds1[2][1]                         +
-	eM1B * bonds1[1][6] + eAB1B  * bonds1[1][5] + eAA1B  * bonds1[1][4] + 0                    + eV1B * bonds1[1][2] + eB1B  * bonds1[1][1] + eB1BB  * bonds1[1][0] +
+	eM1V * bonds1[2][6]                                                 + eA1V  * bonds1[2][3] + eV1V * bonds1[2][2] + 0                                            +
+	eM1B * bonds1[1][6] + eAB1B  * bonds1[1][5] + eAA1B  * bonds1[1][4] + 0                    + 0                   + eB1B  * bonds1[1][1] + eB1BB  * bonds1[1][0] +
 	                      eAB1BB * bonds1[0][5] + eAA1BB * bonds1[0][4] + eA1BB * bonds1[0][3]                       + eB1BB * bonds1[0][1] + eBB1BB * bonds1[0][0] +
     // 2nd-nn
     eM2M * bonds2[6][6]                                                 + eM2A  * bonds2[6][3] + eM2V * bonds2[6][2] + eM2B  * bonds2[6][1]                         + 
 	                      eAB2AB * bonds2[5][5] + eAA2AB * bonds2[5][4] + eA2AB * bonds2[5][3]                       + eAB2B * bonds2[5][1] + eAB2BB * bonds2[5][0] +
 	                      eAA2AB * bonds2[4][5] + eAA2AA * bonds2[4][4] + eAA2A * bonds2[4][3]                       + eAA2B * bonds2[4][1] + eAA2BB * bonds2[4][0] +
 	eM2A * bonds2[3][6] + eA2AB  * bonds2[3][5] + eAA2A  * bonds2[3][4] + eA2A  * bonds2[3][3] + eA2V * bonds2[3][2] + 0                    + eA2BB  * bonds2[3][0] +
-	eM2V * bonds2[2][6]                                                 + eA2V  * bonds2[2][3] + eV2V * bonds2[2][2] + eV2B  * bonds2[2][1]                         +
-	eM2B * bonds2[1][6] + eAB2B  * bonds2[1][5] + eAA2B  * bonds2[1][4] + 0                    + eV2B * bonds2[1][2] + eB2B  * bonds2[1][1] + eB2BB  * bonds2[1][0] +
+	eM2V * bonds2[2][6]                                                 + eA2V  * bonds2[2][3] + eV2V * bonds2[2][2] + 0                                            +
+	eM2B * bonds2[1][6] + eAB2B  * bonds2[1][5] + eAA2B  * bonds2[1][4] + 0                    + 0                   + eB2B  * bonds2[1][1] + eB2BB  * bonds2[1][0] +
 	                      eAB2BB * bonds2[0][5] + eAA2BB * bonds2[0][4] + eA2BB * bonds2[0][3]                       + eB2BB * bonds2[0][1] + eBB2BB * bonds2[0][0];
 
-    const double e0AB= ( w0AB + 0.5*(n1nbr*(eA1A+eB1B)+n2nbr*(eA2A+eB2B)) ) / (n1nbr+n2nbr*r21); // constant of eAB
-    const double e1AB= w1AB / (n1nbr+n2nbr*r21);
     const int    locals= n1nbr + n2nbr +1; // local sites
-    for(int x=1; x<=locals; x ++) e += AB1[x] * (e0AB + e1AB*(x*1.0/locals)); // 1st-nn
-    for(int x=1; x<=locals; x ++) e += AB2[x] * (e0AB + e1AB*(x*1.0/locals))*r21; // 2nd-nn
+    for(int x=1; x<=locals; x ++) e += AB1[x]*(e0AB+e1AB*(x*1.0/locals)); // 1st-nn
+    for(int x=1; x<=locals; x ++) e += AB2[x]*(e0AB+e1AB*(x*1.0/locals))*r21; // 2nd-nn
+    for(int x=1; x<=locals; x ++) e += BV1[x]*(e0BV+e1BV*(x*1.0/locals));
+    for(int x=1; x<=locals; x ++) e += BV2[x]*(e0BV+e1BV*(x*1.0/locals))*r21;
     
 	return e/2;
 }

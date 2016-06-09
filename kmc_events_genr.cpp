@@ -67,5 +67,5 @@ void class_events::genr(){
 	nV ++;
 
     recb_checki(iid);
-    recb_checkv(list_vcc.size()-1);
+    if(list_vcc.size() != 0) recb_checkv(list_vcc.size()-1);
 }

@@ -2,10 +2,11 @@
 #include <vector>
 #include "kmc_global.h"
 #include "kmc_events.h"
+#include <unordered_map>
 
 using namespace std;
 
-double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input and the 1st-nn of it; remove rate info of them and rebuilt it
+double class_events::update_ratesC(int ltcp_in, bool is_recb){ // search for the ltcp input and the 1st-nn of it; remove rate info of them and rebuilt it
 	double rate_change= 0;
 
     int i0= (int) (ltcp_in/nz)/ny;
@@ -22,32 +23,24 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
     	    ltcp= i*ny*nz + j*nz + k;
         }
 
-        if(1==cvcc.count(ltcp)){
-            if(cvcc[ltcp].step == timestep) continue; // if has been modified, skip it
+        if(cvcc.find(ltcp) != cvcc.end()){
+            if(! is_recb && cvcc[ltcp].step == timestep) continue; // if has been modified, skip it
 
             for(int b=0; b<cvcc[ltcp].rates.size(); b ++) rate_change -= cvcc[ltcp].rates[b];
-                
-            if(*(&srf[0][0][0]+ltcp)){
-                cvcc[ltcp].mltcp.clear();
-                cvcc[ltcp].rates.clear();
-            }
-            else cvcc.erase(ltcp);
+            cvcc.erase(ltcp);
         }
-        else if(*(&srf[0][0][0]+ltcp)) cvcc[ltcp]= cvcc_info(); 
     
         if(*(&srf[0][0][0]+ltcp)){
+            if(states[i][j][k] != 1 && states[i][j][k] != -1) error(2, "(update_ratesC) a srf atom not A nor B", 1, states[i][j][k]);
             cvcc[ltcp].step= timestep;
             
-            double em, mu;
-			switch(states[i][j][k]){
-                case  1: em= emvA; mu= muvA; break; 
-                case -1: em= emvB; mu= muvB; break; 
-                default: error(2, "(cal_ratesC) an srf atom isnt 1 or -1", 2, states[i][j][k], timestep);
-            }
+            double mu= (1==states[i][j][k]) ? muvA:muvB;
+            double em= (1==states[i][j][k]) ? emvA:emvB;
 
             int count_AM= 0; // count how many A-M bonds.               if count > n1nbr/2, erase it.
             double rate_temp= 0; // unless meet criterion, rates_change += rate_temp
-	        for(int b= 0; b<n1nbr; b ++){
+	        bool isne= false; // is neg energy
+            for(int b= 0; b<n1nbr; b ++){
 	            int x= pbc(i+v1nbr[b][0], nx);
 	            int y= pbc(j+v1nbr[b][1], ny);
 	            int z= pbc(k+v1nbr[b][2], nz);
@@ -56,25 +49,32 @@ double class_events::update_ratesC(int ltcp_in){ // search for the ltcp input an
                 if(4==states[x][y][z]){
                     count_AM ++;
 
-                    double e0= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z);
+                    int MA= 0; // count how many M-A bonds if count > n1nbr/2, skip it.
+                    for(int c= 0; c<n1nbr; c++){
+	                    int x2= pbc(x+v1nbr[c][0], nx);
+	                    int y2= pbc(y+v1nbr[c][1], ny);
+	                    int z2= pbc(z+v1nbr[c][2], nz);
+                        if(1==abs(states[x2][y2][z2])) MA ++;
+                    }
+                    if(MA > (RATIO_NOCVCC*n1nbr)+0.1) continue; // a M inside Atom matrix. SKIP
 
-			        states[x][y][z]= states[i][j][k];
+                    double e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
+				    states[x][y][z]= states[i][j][k];
                     states[i][j][k]= 0;
-
-		            double ediff= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z) - e0; 
-
+		            double ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0; 
 				    states[i][j][k]= states[x][y][z];
 				    states[x][y][z]= 4;
-			
+                    if(ediff<0) isne= true;
+                    
 				    cvcc[ltcp].mltcp.push_back(ltcp2);
-                    cvcc[ltcp].rates.push_back(mu * exp(-beta*(em+0.5*ediff)));
-                    if((em+0.5*ediff)<0) error(2, "(update_ratesC) minus e in creation of vcc", 1, em+0.5*ediff); // delete it
+                    cvcc[ltcp].rates.push_back(mu * exp(-beta*(ediff+em)));
 				
 				    rate_temp += cvcc[ltcp].rates.back();
                 }
 		    }
 
-            if(double( count_AM) > RATIO_NOCVCC * n1nbr) cvcc.erase(ltcp);
+            if((count_AM > (RATIO_NOCVCC*n1nbr)+0.1) || 0==cvcc[ltcp].mltcp.size()) cvcc.erase(ltcp);
+            else if(isne) error(2, "(update_ratesC) e is neg but not srf atom jump case. nAM", 1, count_AM);
             else                                         rate_change += rate_temp;
 	    }
     }

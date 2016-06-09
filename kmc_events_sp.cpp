@@ -33,8 +33,11 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 				states[x][y][z]= states[i][j][k];
 				states[i][j][k]= 0;
 
-                if((ediff)<0) error(2, "(cal_rateV) got minus sign ", 1, ediff);
-                
+                if((ediff)<0){
+                    N_nediff ++;
+                    ediff= 0;
+                }
+
                 double mu= (1==states[x][y][z]) ? muvA:muvB;
                 rates.push_back(mu * exp(-beta*ediff));
 							
@@ -52,15 +55,15 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 
 double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ // calculate saddle-point e 
     if(stateA1 != 1 && stateA1 != -1) error(2, "(ecal_sp) stateA1 is not an atom (type)", 1, stateA1);
-    int Nbonds1[3][3]= {0}; // should be {A or B}{A or B}
-    int Nbonds2[3][3]= {0}; // should be {A or B}{A or B}
+    int Nbonds1[6][6]= {0}; // should be {A or B}{A or B or M}
+    int Nbonds2[6][6]= {0}; // should be {A or B}{A or B or M}
     
     for(int a=0; a<n1sp; a ++){ // 1st SP nbrs
 	    int x= pbc(i+v1sp[inbr][a][0], nx);
 		int y= pbc(j+v1sp[inbr][a][1], ny);
 		int z= pbc(k+v1sp[inbr][a][2], nz);
 		int stateA2= states[x][y][z];
-        if(abs(stateA2)>1) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
+        if(abs(stateA2)>1 && stateA2 != 4) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
         
         Nbonds1[stateA1+1][stateA2+1] ++;
     }
@@ -70,11 +73,13 @@ double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ 
 		int y= pbc(j+v2sp[inbr][a][1], ny);
 		int z= pbc(k+v2sp[inbr][a][2], nz);
 		int stateA2= states[x][y][z];
-        if(abs(stateA2)>1) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
+        if(abs(stateA2)>1 && stateA2 != 4) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
 		
         Nbonds2[stateA1+1][stateA2+1] ++;
     }
 
-    return Nbonds1[2][2]*eSPA1A + Nbonds1[2][1]*eSPA1V + Nbonds1[2][0]*eSPA1B + Nbonds1[0][2]*eSPB1A + Nbonds1[0][1]*eSPB1V + Nbonds1[0][0]*eSPB1B +
-           Nbonds2[2][2]*eSPA2A + Nbonds2[2][1]*eSPA2V + Nbonds2[2][0]*eSPA2B + Nbonds2[0][2]*eSPB2A + Nbonds2[0][1]*eSPB2V + Nbonds2[0][0]*eSPB2B;
+    return Nbonds1[2][2]*eSPA1A + Nbonds1[2][1]*eSPA1V + Nbonds1[2][0]*eSPA1B + Nbonds1[2][5]*eSPA1M +
+           Nbonds1[0][2]*eSPB1A + Nbonds1[0][1]*eSPB1V + Nbonds1[0][0]*eSPB1B + Nbonds1[0][5]*eSPB1M +
+           Nbonds2[2][2]*eSPA2A + Nbonds2[2][1]*eSPA2V + Nbonds2[2][0]*eSPA2B + Nbonds2[2][5]*eSPA2M +
+           Nbonds2[0][2]*eSPB2A + Nbonds2[0][1]*eSPB2V + Nbonds2[0][0]*eSPB2B + Nbonds2[0][5]*eSPB2M;
 }

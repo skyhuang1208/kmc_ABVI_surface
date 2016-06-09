@@ -89,7 +89,13 @@ void class_initial::ltc_constructor(){
 	for(int i=0; i<n2nbr; i ++){ // v2nbr
 		for(int j=0; j<3; j ++){
 			v2nbr[i][j]= (*(ptr_v2nbr+i))[j];
-            if(i>=n2nbr/2) if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
+            if(i>=n2nbr/2) if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v2nbr isn't symmetry");
+		}
+	}
+	for(int i=0; i<n3nbr; i ++){ // v3nbr
+		for(int j=0; j<3; j ++){
+			v3nbr[i][j]= (*(ptr_v3nbr+i))[j];
+            if(i>=n3nbr/2) if(v3nbr[i][j] != -v3nbr[i-n3nbr/2][j]) error(1, "(ltc_constructor) v3nbr isn't symmetry");
 		}
 	}
 }
@@ -105,6 +111,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
     for(int i=0; i<nx; i ++){	
 	    for(int j=0; j<ny; j ++){	
 	        for(int k=0; k<nz; k ++){
+                srf[i][j][k]= false;
                 if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4;
 		        else{
 			            double ran= ran_generator();
@@ -123,7 +130,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
 	////////// CHECK //////////
 	for(int i=0; i<nx; i ++){ 
 	    for(int j=0; j<ny; j ++){ 
-	        for(int k=0; k<nz; k ++){ 
+	        for(int k=0; k<nz; k ++){
 		        switch(states[i][j][k]){
                     case  0:
 			            list_vcc.push_back(vcc());
@@ -185,7 +192,9 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		if_re >> type >> i >> j >> k;
 		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
 	
-		if( 0==type){
+        *(&srf[0][0][0]+index)= false;
+		
+        if( 0==type){
 			if_re >> ix >> iy >> iz;
 			
 			list_vcc.push_back(vcc());
@@ -356,6 +365,7 @@ void class_initial::init_par(){
 	cout << "\n##### Energy calculation parameters #####" << endl; 
 	
 	cout << "temperature= " << temp << ", beta= " << beta << endl;
+	cout << "correlation factor= " << corrfac<< endl;
 	printf("Vacancy mu= %f %f\n", muvA, muvB);
 	printf("Interstitial mu= %f %f\n", muiA, muiB);
 	printf("Vacancy Em= %f %f\n", emvA, emvB);
