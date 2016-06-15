@@ -14,10 +14,16 @@ class class_events{
 			cout << "##Recombination parameters: 3rd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
 		
             // create v12nbr
-			for(int a=0; a<n1nbr; a ++) // 1st neighbors
-			    v12nbr.push_back({ (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
-			for(int a=0; a<n2nbr; a ++) // 2nd neighbors
-			    v12nbr.push_back({ (*(v2nbr+a))[0], (*(v2nbr+a))[1], (*(v2nbr+a))[2] });
+			for(int a=0; a<n1nbr; a ++){ // 1st neighbors
+			    v12nbr.push_back( { (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
+			    v123nbr.push_back({ (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
+            }
+			for(int a=0; a<n2nbr; a ++){ // 2nd neighbors
+			    v12nbr.push_back( { (*(v2nbr+a))[0], (*(v2nbr+a))[1], (*(v2nbr+a))[2] });
+			    v123nbr.push_back({ (*(v2nbr+a))[0], (*(v2nbr+a))[1], (*(v2nbr+a))[2] });
+            }
+			for(int a=0; a<n3nbr; a ++) // 3rd neighbors
+			    v123nbr.push_back({ (*(v3nbr+a))[0], (*(v3nbr+a))[1], (*(v3nbr+a))[2] });
             
             cvcc_rates= init_ratesC();
             N_nediff= 0;
@@ -35,7 +41,7 @@ class class_events{
 	private:
         // ********************  VARIABLES  ******************** //
         // vcc creation at surface //
-        #define RATIO_NOCVCC 0.5
+#define N_NOCVCC 3
         struct cvcc_info{
             long long int step; // modified step
             vector <int> mltcp;
@@ -46,6 +52,9 @@ class class_events{
         // 1st-nn + 2nd-nn //
         int n12nbr= n1nbr + n2nbr;
         vector < vector<int> > v12nbr;
+        // 1st-nn + 2nd-nn + 3rd-nn //
+        int n123nbr= n1nbr + n2nbr + n3nbr;
+        vector < vector<int> > v123nbr;
         // ********************  VARIABLES  ******************** //
         
 		///// functions of energy calculation /////

@@ -23,15 +23,28 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 			int z= pbc(k+v1nbr[a][2], nz);
 		
 			if(1==states[x][y][z] || -1==states[x][y][z]){
-                double ediff= ecal_sp(states[x][y][z], a, i, j, k) - ecal_bond(i, j, k, x, y, z);
+                double ediff;
+                if(srf[x][y][z]){
+//                    states[i][j][k]= 4;
+                    double e0= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z);
+                    states[i][j][k]= states[x][y][z];
+                    states[x][y][z]= 0;
+                    ediff= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z) - e0; 
+                    states[x][y][z]= states[i][j][k];
+				    states[i][j][k]= 0;
 
-                double e0_nonb= ecal_nonb(i, j, k, x, y, z); // non-broken e0
-				states[i][j][k]= states[x][y][z];
-                if(srf[x][y][z]) states[x][y][z]= 4;
-                else             states[x][y][z]= 0;
-                ediff += ecal_nonb(i, j, k, x, y, z) - e0_nonb; // non-broken e1
-				states[x][y][z]= states[i][j][k];
-				states[i][j][k]= 0;
+                    ediff += (1==states[x][y][z]) ? emvA:emvB;
+                }
+                else{
+                    ediff= ecal_sp(states[x][y][z], a, i, j, k) - ecal_bond(i, j, k, x, y, z);
+
+                    double e0_nonb= ecal_nonb(i, j, k, x, y, z); // non-broken e0
+				    states[i][j][k]= states[x][y][z];
+                    states[x][y][z]= 0;
+                    ediff += ecal_nonb(i, j, k, x, y, z) - e0_nonb; // non-broken e1
+				    states[x][y][z]= states[i][j][k];
+				    states[i][j][k]= 0;
+                }
 
                 if((ediff)<0){
                     N_nediff ++;

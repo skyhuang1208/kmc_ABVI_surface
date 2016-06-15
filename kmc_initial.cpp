@@ -68,7 +68,8 @@ void class_initial::ltc_constructor(){
         n1sp= 6; ptr_v1sp= &v1sp_bcc[0][0][0]; 
         n2sp= 6; ptr_v2sp= &v2sp_bcc[0][0][0];
     }
-	else if(strcmp(type_ltc, "FCC")==0){ptr_vbra= vbra_fcc; n1nbr=12; ptr_v1nbr= v1nbr_fcc; n2nbr= 6; ptr_v2nbr= v2nbr_fcc;}
+	else if(strcmp(type_ltc, "FCC")==0){ptr_vbra= vbra_fcc; n1nbr=12; ptr_v1nbr= v1nbr_fcc; n2nbr= 6; ptr_v2nbr= v2nbr_fcc; 
+                                        error(2, "(FCC) add v3nbr, sp, and change N_NOCVCC, N_YESCVCC");}
 	else if(strcmp(type_ltc, "HCP")==0){}
 	else	error(1, "(ltc_constructor) coldn't match the lattice type", type_ltc);
 			

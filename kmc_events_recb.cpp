@@ -73,9 +73,6 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
 }
 
 bool class_events::recb_checki(int id){
-    vector<vector<int>> list_recb;
-    vector<vector<int>> list_AAtoAB;
-    
     int ltcp= list_itl[id].ltcp;
     int i= (int) (ltcp/nz)/ny;
 	int j= (int) (ltcp/nz)%ny;
@@ -86,34 +83,64 @@ bool class_events::recb_checki(int id){
     }
     int stateI= states[i][j][k];
     
+    vector<vector<int>> list_recb;
+    vector<vector<int>> list_AAtoAB;
+    double minE= 999999999;
     int x, y, z;
-	for(int a=0; a<n1nbr; a ++){
-        x= pbc(i+v1nbr[a][0], nx);
-		y= pbc(j+v1nbr[a][1], ny);
-		z= pbc(k+v1nbr[a][2], nz);
-        if(0==states[x][y][z] || 4==states[x][y][z]) list_recb.push_back({x, y, z});
-        if(-1==states[x][y][z] && 2==stateI)         list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
-    }
-    if(list_recb.size() !=0) goto letsRECB;
-	
-    for(int a=0; a<n2nbr; a ++){
-        x= pbc(i+v2nbr[a][0], nx);
-		y= pbc(j+v2nbr[a][1], ny);
-		z= pbc(k+v2nbr[a][2], nz);
-        if(0==states[x][y][z] || 4==states[x][y][z]) list_recb.push_back({x, y, z});
-//        if(-1==states[x][y][z] && 2==stateI)         list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
-    }
-    if(list_recb.size() !=0) goto letsRECB;
-	
-    for(int a=0; a<n3nbr; a ++){
-        x= pbc(i+v3nbr[a][0], nx);
-		y= pbc(j+v3nbr[a][1], ny);
-		z= pbc(k+v3nbr[a][2], nz);
-        if(0==states[x][y][z] || 4==states[x][y][z]) list_recb.push_back({x, y, z});
-    }
-    if(list_recb.size() !=0) goto letsRECB;
+	for(int a=0; a<n123nbr; a ++){ // check recb
+        x= pbc(i+v123nbr[a][0], nx);
+		y= pbc(j+v123nbr[a][1], ny);
+		z= pbc(k+v123nbr[a][2], nz);
+        if(0==states[x][y][z] || 4==states[x][y][z]){
+            int stateV= states[x][y][z];
+            double e0, ediff;
+            switch(stateI){
+                case 2:
+                    e0= ecal_bond(x, y, z, i, j, k);
+                    states[i][j][k]= 1; states[x][y][z]= 1;
+                    ediff= ecal_bond(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    break;
+                case 3:
+                    e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
+                    
+                    states[i][j][k]=  1; states[x][y][z]= -1;
+                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    
+                    states[i][j][k]= -1; states[x][y][z]=  1;
+                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    break;
+            }
 
-    if(list_AAtoAB.size() !=0){ // AA+B->A+AB
+            states[i][j][k]= stateI;
+            states[x][y][z]= stateV;
+        }
+        if(a<n1nbr && ( -1==states[x][y][z] && 2==stateI )) list_AAtoAB.push_back({x, y, z}); // AA+B->A+AB
+    }
+
+    if(list_recb.size() !=0){ //recb
+        int ran= (int) ran_generator()*list_recb.size();
+        x= list_recb[ran].at(0);
+        y= list_recb[ran].at(1);
+        z= list_recb[ran].at(2);
+        rules_recb(id, i, j, k, -1, x, y, z); // vccID is unknown, give -1
+        return true;
+    }
+    else if(list_AAtoAB.size() !=0){ // AA+B->A+AB
         int ran= (int) ran_generator()*list_AAtoAB.size();
         x= list_AAtoAB[ran].at(0);
         y= list_AAtoAB[ran].at(1);
@@ -122,19 +149,9 @@ bool class_events::recb_checki(int id){
         return true;
     }
     else return false;
-
-letsRECB: // recb
-    int ran= (int) ran_generator()*list_recb.size();
-    x= list_recb[ran].at(0);
-    y= list_recb[ran].at(1);
-    z= list_recb[ran].at(2);
-    rules_recb(id, i, j, k, -1, x, y, z); // vccID is unknown, give -1
-    return true;
 }
 
 bool class_events::recb_checkv(int id){
-    vector<vector<int>> list_recb;
-    
     int ltcp= list_vcc[id].ltcp;
     int i= (int) (ltcp/nz)/ny;
 	int j= (int) (ltcp/nz)%ny;
@@ -143,42 +160,65 @@ bool class_events::recb_checkv(int id){
         sink(true, id);
         return true;
     }
+    int stateV= states[i][j][k];
     
+    vector<vector<int>> list_recb;
+    double minE= 999999999;
     int x, y, z;
-	for(int a=0; a<n1nbr; a ++){
-        x= pbc(i+v1nbr[a][0], nx);
-		y= pbc(j+v1nbr[a][1], ny);
-		z= pbc(k+v1nbr[a][2], nz);
-        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
-    }
-    if(list_recb.size() !=0) goto letsRECB;
-	
-    for(int a=0; a<n2nbr; a ++){
-        x= pbc(i+v2nbr[a][0], nx);
-		y= pbc(j+v2nbr[a][1], ny);
-		z= pbc(k+v2nbr[a][2], nz);
-        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
-    }
-    if(list_recb.size() !=0) goto letsRECB;
-	
-    for(int a=0; a<n3nbr; a ++){
-        x= pbc(i+v3nbr[a][0], nx);
-		y= pbc(j+v3nbr[a][1], ny);
-		z= pbc(k+v3nbr[a][2], nz);
-        if((2==states[x][y][z] || 3==states[x][y][z])) list_recb.push_back({x, y, z});
-    }
-    if(list_recb.size() !=0) goto letsRECB;
-   
-    return false;
+	for(int a=0; a<n123nbr; a ++){ // check recb
+        x= pbc(i+v123nbr[a][0], nx);
+		y= pbc(j+v123nbr[a][1], ny);
+		z= pbc(k+v123nbr[a][2], nz);
 
-letsRECB:
-    int ran= (int) ran_generator()*list_recb.size();
-    x= list_recb[ran].at(0);
-    y= list_recb[ran].at(1);
-    z= list_recb[ran].at(2);
-    rules_recb(-1, x, y, z, id, i, j, k); // itlID is unknown, give -1
+        if((2==states[x][y][z] || 3==states[x][y][z])){
+            int stateI= states[x][y][z];
+            double e0, ediff;
+            switch(stateI){
+                case 2:
+                    e0= ecal_bond(x, y, z, i, j, k);
+                    states[i][j][k]= 1; states[x][y][z]= 1;
+                    ediff= ecal_bond(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    break;
+                case 3:
+                    e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
+                    
+                    states[i][j][k]=  1; states[x][y][z]= -1;
+                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    
+                    states[i][j][k]= -1; states[x][y][z]=  1;
+                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
+                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
+                    else if((ediff-minE)<0){
+                        list_recb.clear(); list_recb.push_back({x, y, z});
+                        minE= ediff;
+                    }
+                    break;
+            }
 
-    return true;
+            states[x][y][z]= stateI;
+            states[i][j][k]= stateV;
+        }
+    }
+
+    if(list_recb.size() !=0){ //recb
+        int ran= (int) ran_generator()*list_recb.size();
+        x= list_recb[ran].at(0);
+        y= list_recb[ran].at(1);
+        z= list_recb[ran].at(2);
+        rules_recb(-1, x, y, z, id, i, j, k); // itlID is unknown, give -1
+        return true;
+    }
+    else return false;
 }
 
 void class_events::srf_check(int i, int j, int k){ // when vacuum changed, check if srf array changes

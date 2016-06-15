@@ -37,9 +37,9 @@ double class_events::update_ratesC(int ltcp_in, bool is_recb){ // search for the
             double mu= (1==states[i][j][k]) ? muvA:muvB;
             double em= (1==states[i][j][k]) ? emvA:emvB;
 
-            int count_AM= 0; // count how many A-M bonds.               if count > n1nbr/2, erase it.
-            double rate_temp= 0; // unless meet criterion, rates_change += rate_temp
-	        bool isne= false; // is neg energy
+            double rate_temp= 0; // temporary rate
+	        bool isne= false;    // is neg energy
+            int AM= 0;           // count of A-M bonds
             for(int b= 0; b<n1nbr; b ++){
 	            int x= pbc(i+v1nbr[b][0], nx);
 	            int y= pbc(j+v1nbr[b][1], ny);
@@ -47,36 +47,36 @@ double class_events::update_ratesC(int ltcp_in, bool is_recb){ // search for the
     	        int ltcp2= x*ny*nz + y*nz + z;
 
                 if(4==states[x][y][z]){
-                    count_AM ++;
+                    AM ++;
 
-                    int MA= 0; // count how many M-A bonds if count > n1nbr/2, skip it.
-                    for(int c= 0; c<n1nbr; c++){
-	                    int x2= pbc(x+v1nbr[c][0], nx);
-	                    int y2= pbc(y+v1nbr[c][1], ny);
-	                    int z2= pbc(z+v1nbr[c][2], nz);
-                        if(1==abs(states[x2][y2][z2])) MA ++;
-                    }
-                    if(MA > (RATIO_NOCVCC*n1nbr)+0.1) continue; // a M inside Atom matrix. SKIP
-
+                    states[x][y][z]= 0;
                     double e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
 				    states[x][y][z]= states[i][j][k];
                     states[i][j][k]= 0;
 		            double ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0; 
 				    states[i][j][k]= states[x][y][z];
 				    states[x][y][z]= 4;
-                    if(ediff<0) isne= true;
+                    
+                    ediff += em; // ediff becomes ediff+em
+                    if(ediff<0){
+                        isne= true;
+                        ediff= 0;
+                    }
                     
 				    cvcc[ltcp].mltcp.push_back(ltcp2);
-                    cvcc[ltcp].rates.push_back(mu * exp(-beta*(ediff+em)));
+                    cvcc[ltcp].rates.push_back(mu * exp(-beta*ediff));
 				
 				    rate_temp += cvcc[ltcp].rates.back();
                 }
 		    }
 
-            if((count_AM > (RATIO_NOCVCC*n1nbr)+0.1) || 0==cvcc[ltcp].mltcp.size()) cvcc.erase(ltcp);
-            else if(isne) error(2, "(update_ratesC) e is neg but not srf atom jump case. nAM", 1, count_AM);
-            else                                         rate_change += rate_temp;
-	    }
+            if(0==AM) error(2, "(cvcc) an srf atom does not bond with vacuum");
+            else if(AM >= N_NOCVCC) cvcc.erase(ltcp); // either extrusion or intrusion
+            else{
+                rate_change += rate_temp;
+                if(isne) cout << "*** neg e in cvcc ***";
+            }
+        }
     }
 
 	return rate_change;
