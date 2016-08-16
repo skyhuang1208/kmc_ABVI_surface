@@ -89,7 +89,7 @@ const double r21=                          0.5;
 const double e0AB=                     -1.4447;
 const double e1AB=                     -0.0210;
 // BV bond
-const double e0BV=  -0.6029; // eB1V= e0BV + e1BV*conc
+const double e0BV=  -0.6029; // eB1V: e0BV + e1BV*conc
 const double e1BV=        0; // change
 
 // 1st nn

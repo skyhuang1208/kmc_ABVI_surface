@@ -65,7 +65,7 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
     
         if(nM !=0){
             srf_check(xi, yi, zi);
-            srf_check(xv, yv, zi);
+            srf_check(xv, yv, zv);
             cvcc_rates += update_ratesC(xi*ny*nz+yi*nz+zi, true);
             cvcc_rates += update_ratesC(xv*ny*nz+yv*nz+zv, true);
         }
@@ -133,7 +133,7 @@ bool class_events::recb_checki(int id){
     }
 
     if(list_recb.size() !=0){ //recb
-        int ran= (int) ran_generator()*list_recb.size();
+        int ran= (int) ( ran_generator()*list_recb.size() );
         x= list_recb[ran].at(0);
         y= list_recb[ran].at(1);
         z= list_recb[ran].at(2);
@@ -141,7 +141,7 @@ bool class_events::recb_checki(int id){
         return true;
     }
     else if(list_AAtoAB.size() !=0){ // AA+B->A+AB
-        int ran= (int) ran_generator()*list_AAtoAB.size();
+        int ran= (int) ( ran_generator()*list_AAtoAB.size() );
         x= list_AAtoAB[ran].at(0);
         y= list_AAtoAB[ran].at(1);
         z= list_AAtoAB[ran].at(2);
@@ -211,7 +211,7 @@ bool class_events::recb_checkv(int id){
     }
 
     if(list_recb.size() !=0){ //recb
-        int ran= (int) ran_generator()*list_recb.size();
+        int ran= (int) ( ran_generator()*list_recb.size() );
         x= list_recb[ran].at(0);
         y= list_recb[ran].at(1);
         z= list_recb[ran].at(2);
@@ -262,7 +262,7 @@ void class_events::sink(bool isvcc, int index){ // execute the sink
 
         ran= ran_generator();
 		if(list_sink.size() != 0){
-            int i= (int) ran*list_sink.size();
+            int i= (int) ( ran*list_sink.size() );
 			*(&states[0][0][0]+ltcp)= list_sink[i];
             if(list_sink[i] != 1 && list_sink[i] != -1) error(2, "a atom from sink isnt atom", 1, list_sink[i]);
 			list_sink.erase(list_sink.begin()+i);
