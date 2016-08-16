@@ -101,49 +101,74 @@ void class_initial::ltc_constructor(){
 	}
 }
 
-void class_initial::init_states_array(double compV, double compA, int nMlayer){
-	// STATE 0: vacancy, 1: A atom, -1: B atom, 4: Vacuum
+void class_initial::init_states_array(double nvoid, double nvcc, int nMlayer){
+    for(int i=0; i<nx*ny*nz; i++) *(&states[0][0][0]+i)= 1;
+    
+    for(int i=1; i <= nvoid+nvcc; i ++){ // voids and vcc share the same loop
+        int x[3], y[3], z[3];
+		for(int j=1; j<= 10000; j ++){
+            bool isfound= true;
+            x[0]= (int) (ran_generator()*nx); // central atom of the void
+		    y[0]= (int) (ran_generator()*ny);
+		    z[0]= (int) (ran_generator()*nz);
 
-    double pV, pA;
-    bool is_1vcc; // if compV>1, is 1 vcc
-    if(compV >1.0){ is_1vcc= true;  pV= 0;     pA= compA; }
-    else          { is_1vcc= false; pV= compV; pA= compA*(1-compV); }
+            int ran1= (int) (ran_generator()*n1nbr); // 2nd and 3rd
+            int ran2= (int) (ran_generator()*n1nbr);
+            if(ran1==ran2) isfound= false;
+			
+            x[1]= pbc(x[0]+v1nbr[ran1][0], nx); 
+            y[1]= pbc(y[0]+v1nbr[ran1][1], ny); 
+            z[1]= pbc(z[0]+v1nbr[ran1][2], nz);
+			x[2]= pbc(x[0]+v1nbr[ran2][0], nx); 
+            y[2]= pbc(y[0]+v1nbr[ran2][1], ny); 
+            z[2]= pbc(z[0]+v1nbr[ran2][2], nz);
 
-    for(int i=0; i<nx; i ++){	
-	    for(int j=0; j<ny; j ++){	
-	        for(int k=0; k<nz; k ++){
-                srf[i][j][k]= false;
-                if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4;
-		        else{
-			            double ran= ran_generator();
+            for(int n=0; n<3; n++){ // check if void next to other void
+                if(0==states[x[n]][y[n]][z[n]] || 5==states[x[n]][y[n]][z[n]]) isfound= false;
 
-                        if(ran < pV)                states[i][j][k]= 0;
-                        else if(ran < (pV+pA))      states[i][j][k]= 1;
-			            else                        states[i][j][k]=-1;
-		        }
-    }}}
-    if(is_1vcc){
-        states[nx/2][ny/2][nz/2]= 0; 
-        cout << "compV gt 1: only 1 vcc\n";
+		        for(int a=0; a<n1nbr; a ++){
+			        int x1= pbc(x[n]+v1nbr[a][0], nx);
+			        int y1= pbc(y[n]+v1nbr[a][1], ny);
+			        int z1= pbc(z[n]+v1nbr[a][2], nz);
+                    if(5==states[x1][y1][z1]) isfound= false;
+                }
+
+                if(i > nvoid) break; // for single vcc check the first atom only
+            }
+
+            if(isfound) break; // if found then exit
+            if(j==10000) error(1, "(init_states_array) cant find a place to put void");
+        }
+            
+        if(i <= nvoid) list_void.push_back(vector<int>());
+        for(int n=0; n<3; n++){ // found locations, now build void or vcc  
+            int ltcp= x[n]*ny*nz + y[n]*nz + z[n];
+            list_vcc.push_back(vcc());
+			list_vcc.back().ltcp= ltcp;
+
+            if(i <= nvoid){ // void
+                states[x[n]][y[n]][z[n]]= 5;
+			    list_vcc.back().ivoid= list_void.size() -1;
+                list_void.back().push_back(list_vcc.size()-1);
+            }
+            else{ // vcc
+                states[x[0]][y[0]][z[0]]= 0;
+                list_vcc.back().ivoid= -1;
+                break;
+            }
+        }
     }
 
-	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0;
+	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0; nVD= nvoid;
 	////////// CHECK //////////
 	for(int i=0; i<nx; i ++){ 
 	    for(int j=0; j<ny; j ++){ 
 	        for(int k=0; k<nz; k ++){
 		        switch(states[i][j][k]){
-                    case  0:
-			            list_vcc.push_back(vcc());
-			            list_vcc[nV].ltcp= i*ny*nz+j*nz+k;
-			            list_vcc[nV].ix= 0;
-			            list_vcc[nV].iy= 0;
-			            list_vcc[nV].iz= 0;
-                        nV ++; break;
-		            case  1:
-                        nA ++; break;
-                    case -1:
-                        nB ++; break;
+                    case  5:
+                    case  0: nV ++; break;
+		            case  1: nA ++; break;
+                    case -1: nB ++; break;
                     case  4:
                         for(int a=0; a<n1nbr; a ++){ // mark srf atoms
                             int x= pbc(i+v1nbr[a][0], nx);
@@ -157,17 +182,12 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
                     default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
 	            }
     }}}
-	if(compV>1 && nV != 1) error(1, "(init_states_array) The number of vacancies is not 1", 2, nV, compV); // delete
-#define TOL 0.01
-	int nAtotal= nA + nB;
-	if(abs((double) nA/nAtotal-compA) > TOL) error(1, "(init_states_array) the composition of generated conf is inconsistent of compA", 1, nA);
-	////////// CHECK //////////
 	
 	cout << "The random solution configuration has been generated!" << endl;
 	cout << "Vacancy: " << nV << endl;
     cout << "Vacuum:  " << nM << endl;
-	cout << "Atype A: " << nA << ", pct: " << 100* (double) nA/(nAtotal) << "%" << endl;
-	cout << "Atype B: " << nB << ", pct: " << 100* (double) nB/(nAtotal) << "%" << endl;
+	cout << "Atype A: " << nA << ", pct: " << 100* (double) nA/nA << "%" << endl;
+	cout << "Atype B: " << nB << ", pct: " << 100* (double) nB/nA << "%" << endl;
 }
 
 void class_initial::read_restart(char name_restart[], long long int &ts_initial, double &time_initial){

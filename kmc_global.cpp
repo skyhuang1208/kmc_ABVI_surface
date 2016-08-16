@@ -23,7 +23,7 @@ int n1sp, n2sp;
 int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
 int v2sp[MAX_NNBR][MAX_NNBR][3];
 
-int nA, nB, nV, nAA, nBB, nAB, nM;
+int nA, nB, nV, nAA, nBB, nAB, nM, nVD, nVs;
 int sum_mag; // sum of magnitization; should be conserved
 int  states[nx][ny][nz];
 bool    srf[nx][ny][nz]= {false};
@@ -38,6 +38,7 @@ FILE * out_sro;
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
 vector <int> list_sink;
+vector < vector<int> > list_void; // A list of voids
 
 int N_genr= 0;
 int njump[10]= {0};
@@ -98,7 +99,7 @@ void error(int nexit, string errinfo, char c[]){
 double ran_generator(){
 	static bool first= true;
 	if(first){
-		srand(time(NULL));
+        srand(time(NULL));
 		first= false;
 	}
 	
@@ -146,14 +147,14 @@ void write_conf(){
 				double x= i*vbra[0][0] + j*vbra[1][0] + k*vbra[2][0];
 				double y= i*vbra[0][1] + j*vbra[1][1] + k*vbra[2][1];
 				double z= i*vbra[0][2] + j*vbra[1][2] + k*vbra[2][2];
-			
+		
 				if(-1==states[i][j][k] || 1==states[i][j][k]){
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " ";
 				    if(srf[i][j][k]) of_ltcp << "1" << endl;
                     else             of_ltcp << "0" << endl;
                 }
-				else if (0==states[i][j][k]){
+				else if (0==states[i][j][k] || 5==states[i][j][k]){
 					int id; for(id=0; id<list_vcc.size() && list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
 					
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
@@ -219,7 +220,8 @@ void write_hisdef(){
 	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
     
     for(int i=0; i<list_vcc.size(); i++){
-		fprintf(his_def, "0 %d %d %d %d\n", list_vcc[i].ltcp, list_vcc[i].ix, list_vcc[i].iy, list_vcc[i].iz);
+		int type= *(&states[0][0][0]+list_vcc[i].ltcp);
+		fprintf(his_def, "%d %d %d %d %d\n", type, list_vcc[i].ltcp, list_vcc[i].ix, list_vcc[i].iy, list_vcc[i].iz);
 	}
 	for(int i=0; i<list_itl.size(); i++){
 		int type= *(&states[0][0][0]+list_itl[i].ltcp);
@@ -279,7 +281,7 @@ double cal_sro(){
 			for(int k=0; k<nz; k ++){
 				int state0= states[i][j][k];
 
-                if(-1==state0){
+                if(5==state0 || 0==state0){
                     ncheck ++;
                     int nAnbr= 0;
 
@@ -305,6 +307,6 @@ double cal_sro(){
                 }
     }}}
     
-    if(ncheck != nB) error(2, "(cal_sro) number inconsistent", 2, ncheck, nB);
-    return sro/nB;
+    if(ncheck != nV) error(2, "(cal_sro) number inconsistent", 2, ncheck, nV);
+    return sro/nV;
 }

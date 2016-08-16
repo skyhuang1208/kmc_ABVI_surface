@@ -7,7 +7,7 @@
 using namespace std;
 
 void class_events::genr(){
-	int ltcp[2]; // the chosen 2 ltcps in generating frenkel pair; [0]->itl; [1]->vcc
+    int ltcp[2]; // the chosen 2 ltcps in generating frenkel pair; [0]->itl; [1]->vcc
     double ran;
 
 	do{ // generating itl position: not on ltc occupied by AA, AB, BB, surface atom
@@ -42,28 +42,15 @@ void class_events::genr(){
 	list_vcc[vid].iz= 0;
 
 	// Update numbers (before)
-	switch(*(&states[0][0][0]+ltcp[0])){
-		case  1: nA --; break;
-		case -1: nB --; break;
-		default: error(2, "(genr) an unknown atom type", 1, *(&states[0][0][0]+ltcp[0]));
-	}
-	switch(*(&states[0][0][0]+ltcp[1])){
-		case  1: nA --; break;
-		case -1: nB --; break;
-		default: error(2, "(genr) an unknown atom type", 1, *(&states[0][0][0]+ltcp[1]));
-	}
+	nA --;
+	nA --;
 	
 	// Update states
 	*(&states[0][0][0]+ltcp[0])= *(&states[0][0][0]+ltcp[0]) + *(&states[0][0][0]+ltcp[1]);
 	*(&states[0][0][0]+ltcp[1])= 0;
-	if(0==*(&states[0][0][0]+ltcp[0])) *(&states[0][0][0]+ltcp[0])= 3; // AB itl
 
 	// update numbers (after)
-	switch(*(&states[0][0][0]+ltcp[0])){
-		case  2: nAA ++; break;
-		case  3: nAB ++; break;
-		default: error(2, "(genr) an unknown itl type", 1, *(&states[0][0][0]+ltcp[0]));
-	}
+	nAA ++;
 	nV ++;
 
     recb_checki(iid);

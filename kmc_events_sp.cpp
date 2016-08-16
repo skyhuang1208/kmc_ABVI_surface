@@ -8,9 +8,14 @@ using namespace std;
 
 double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, vector <int> &ilist, vector <int> &inbr){
 	double sum_rate= 0;
-	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent", 2, nV, list_vcc.size());
+//	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent", 2, nV, list_vcc.size());
 
+    nVs= 0;
 	for(int ivcc=0; ivcc < nV; ivcc ++){
+        if(list_vcc[ivcc].ivoid !=-1) continue; // a void atom; immobile
+        
+        nVs ++;
+
 		int i= (int) (list_vcc[ivcc].ltcp/nz)/ny;
 		int j= (int) (list_vcc[ivcc].ltcp/nz)%ny;
 		int k= (int)  list_vcc[ivcc].ltcp%nz;
@@ -76,6 +81,7 @@ double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ 
 		int y= pbc(j+v1sp[inbr][a][1], ny);
 		int z= pbc(k+v1sp[inbr][a][2], nz);
 		int stateA2= states[x][y][z];
+        if(5==stateA2) stateA2= 0;
         if(abs(stateA2)>1 && stateA2 != 4) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
         
         Nbonds1[stateA1+1][stateA2+1] ++;
@@ -86,6 +92,7 @@ double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ 
 		int y= pbc(j+v2sp[inbr][a][1], ny);
 		int z= pbc(k+v2sp[inbr][a][2], nz);
 		int stateA2= states[x][y][z];
+        if(5==stateA2) stateA2= 0;
         if(abs(stateA2)>1 && stateA2 != 4) error(2, "(ecal_sp) stateA2 is an itl", 1, stateA2);
 		
         Nbonds2[stateA1+1][stateA2+1] ++;

@@ -27,6 +27,12 @@ class class_events{
             
             cvcc_rates= init_ratesC();
             N_nediff= 0;
+    
+            for(int i=0; i<list_vcc.size(); i++) recb_checkv(i);
+//            cout << "index type ivoid" << endl;
+//            for(int i=0; i<list_vcc.size(); i++){
+ //               cout << i << " " << *(&states[0][0][0]+list_vcc[i].ltcp) << " " << list_vcc[i].ivoid << endl;
+ //           }
         }
 		
         // variables
@@ -84,6 +90,8 @@ class class_events{
 		
         ///// functions for recombination /////
         void rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv);
+        void rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv, bool attached);
+        void coll_check(int ivd, int i, int j, int k);
         bool recb_checki(int id);
         bool recb_checkv(int id);
         void srf_check(int i, int j, int k);

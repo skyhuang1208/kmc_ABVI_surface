@@ -21,8 +21,8 @@ int main(int nArg, char *Arg[]){
 
 	cout << "\n########## The Simulation Begins !! ##########" << endl;
 	timestep=  ts_bg; totaltime= time_bg;
-	cout << "TIMESTEP() TIME(s) GENR()	NA() NB()	NV() NAA() NAB() NBB()	AJUMP_V% AJUMP_I%";
-	printf("\n%d %e %d     %d %d     %d %d %d %d     %f %f", 0, 0.0, 0, nA, nB, nV, nAA, nAB, nBB, 0.0, 0.0);
+	cout << "TIMESTEP() TIME(s) GENR()	NA() NB()	nV() NVD() NVS() NAA() NAB() NBB()";
+	printf("\n%d %e %d     %d %d     %d %d %d %d %d", 0, 0.0, 0, nA, nB, nVD, nV, nAA, nAB, nBB);
     int N_0def= 0;
     int N_conf= 0;
 	while((totaltime<= time_bg+par_time) && (timestep != ts_bg+par_step)){
@@ -36,8 +36,7 @@ int main(int nArg, char *Arg[]){
 		// OUTPUT DATA
 		if(0==timestep%step_log){
             cout << endl;
-			printf("%lld %.10e %d     %d %d     %d %d %d %d     %f %f    %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, 
-                                                        ((double) Vja[0])/(Vja[0]+Vja[1]), ((double) Ija[0])/(Ija[0]+Ija[1]), events.cvcc_rates);
+			printf("%lld %.10e %d     %d %d     %d %d   %d %d %d %d", timestep, totaltime, N_genr, nA, nB, nVD, nVs, nV, nAA, nAB, nBB); 
 			if(N_0def != 0){
 				cout << "  *** 0-defect genr: " << N_0def << " ***"; 
                 N_0def= 0;
@@ -55,7 +54,7 @@ int main(int nArg, char *Arg[]){
         }
 
 		if(0==timestep%step_out){
-			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range());
+//			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range());
             fflush(out_engy);
 			fprintf(out_sro,  "%lld %e %f\n", timestep, totaltime, cal_sro());
             write_vdep();
@@ -68,7 +67,7 @@ int main(int nArg, char *Arg[]){
 	}
 
 	// finalizing
-	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
+	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d   %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nVD, nVs, nAA, nAB, nBB);
 	write_conf(); cout << "<Output conf files at: " << timestep << ">";
     
     for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation

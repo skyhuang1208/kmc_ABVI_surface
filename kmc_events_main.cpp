@@ -124,23 +124,15 @@ void class_events::actual_jumpI(int iid, int inbr){
     int xi= (int) (list_itl[iid].ltcp/nz)/ny; // itl position
 	int yi= (int) (list_itl[iid].ltcp/nz)%ny;
 	int zi= (int)  list_itl[iid].ltcp%nz;
-	if(2!=states[xi][yi][zi] && 3!=states[xi][yi][zi]) error(2, "(actual_jumpI) the jumping itl is not an itl (type)", 1, states[xi][yi][zi]);
+	if(2!=states[xi][yi][zi]) error(2, "(actual_jumpI) the jumping itl is not an itl (type)", 1, states[xi][yi][zi]);
 
     int x, y, z;
-    if(2==states[xi][yi][zi]){
-	    x= pbc(xi+v1nbr[inbr][0], nx);
-	    y= pbc(yi+v1nbr[inbr][1], ny);
-	    z= pbc(zi+v1nbr[inbr][2], nz);
-    }
-    else{
-	    x= pbc(xi+v2nbr[inbr][0], nx);
-	    y= pbc(yi+v2nbr[inbr][1], ny);
-	    z= pbc(zi+v2nbr[inbr][2], nz);
-    }
-    if(states[x][y][z] != 1 && states[x][y][z] != -1)  error(2, "(actual_jumpI) the jumping atom is not an atom (type)", 1, states[x][y][z]);
+	x= pbc(xi+v1nbr[inbr][0], nx);
+	y= pbc(yi+v1nbr[inbr][1], ny);
+	z= pbc(zi+v1nbr[inbr][2], nz);
+    if(states[x][y][z] != 1)  error(2, "(actual_jumpI) the jumping atom is not an atom (type)", 1, states[x][y][z]);
     
-    if(2==states[xi][yi][zi])   Ija[0] ++;
-    else                        Ija[1] ++;
+    Ija[0] ++;
 	    
     states[x][y][z]= states[xi][yi][zi];
     states[xi][yi][zi]= 1;

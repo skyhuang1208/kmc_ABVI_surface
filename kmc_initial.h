@@ -43,7 +43,7 @@ class class_initial{
 				cout << "START FROM a random configuration..." << endl;
 				ts_bg= 0; time_bg= 0;
 				
-				init_states_array(par_compV, par_compA, par_nMlayer);
+				init_states_array(par_nvoid, par_nvcc, par_nMlayer);
 				write_conf();
 				cout << "Output t0 conf files" << endl;
 				
@@ -72,7 +72,7 @@ class class_initial{
 
 		// functions
 		void ltc_constructor();
-		void init_states_array(double compV, double compA, int nMlayer);
+        void init_states_array(double nvoid, double nvcc, int nMlayer);
 		void read_restart(char name_restart[], long long int &ts_initial, double &time_initial);
 		void init_par();
 		void init_uncorrH();

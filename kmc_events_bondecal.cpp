@@ -279,6 +279,7 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
     for(int x=1; x<=locals; x ++) e += BV1[x]*(e0BV+e1BV*(x*1.0/locals));
     for(int x=1; x<=locals; x ++) e += BV2[x]*(e0BV+e1BV*(x*1.0/locals))*r21;
     
+    cout << "no not here" << endl;
 	return e/2;
 }
 

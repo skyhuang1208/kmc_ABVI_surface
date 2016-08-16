@@ -25,8 +25,10 @@ extern int v2sp[MAX_NNBR][MAX_NNBR][3];
 const int nx=  par_nx;
 const int ny=  par_ny;
 const int nz=  par_nz;
-const int x_sink= (int) (nx/2);
-extern int nA, nB, nV, nAA, nBB, nAB, nM;
+const int x_sink= (int) (nx*100);
+const int y_sink= (int) (ny*100);
+const int z_sink= (int) (nz*100);
+extern int nA, nB, nV, nAA, nBB, nAB, nM, nVD, nVs;
 extern int sum_mag; // sum of magnitization; should be conserved
 extern int  states[nx][ny][nz];
 extern bool    srf[nx][ny][nz];
@@ -47,10 +49,11 @@ const double corrfac=   par_corrfac;
 
 // Defect lists
 struct vcc{ // information of an vacancy
-    vcc(): njump(-1) {}	
+    vcc(): njump(-1), ivoid(-1), ix(0), iy(0), iz(0) {}	
     int njump;
     int ltcp;
 	int ix, iy, iz;
+    int ivoid;
 };
 struct itl{ // information of an interstitial; can declare a vector to store all interstitials
 	int ltcp;
@@ -61,6 +64,7 @@ struct itl{ // information of an interstitial; can declare a vector to store all
 extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
 extern vector <int> list_sink;  // A list contains atoms in the sink
+extern vector < vector<int> > list_void; // A list of voids
 
 extern int N_genr;
 extern int njump[10];

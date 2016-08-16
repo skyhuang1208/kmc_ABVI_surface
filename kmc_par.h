@@ -3,20 +3,22 @@
 
 const char   par_ltc[4]=		"BCC";
 
-const int    par_nx=                      256; // 620 + 2*20
-const int    par_ny=                       64;
-const int    par_nz=                       64;
+const int    par_nx=                      128; // 620 + 2*20
+const int    par_ny=                      128;
+const int    par_nz=                      128;
 const int    par_nMlayer=                   0;
 
-const double par_compA=                  0.99; // composition of A atoms
-const double par_compV=                     0; // vcc; set >1.0 to get only 1 vcc
+// const double par_compA=                  0.99; // composition of A atoms
+const double par_nvcc=                      0; // single vcc 
+const double par_nvoid=                  1000; // # of voids
+const double par_vsize=                     3; // # of atoms a void contain initially 
 
 const double	    par_time=           1e300; // toal time (s)
 const double        time_conf=          1e300; // time that output a conf file for restart later
 
-const long long int par_step=             1e7; // toal timestep (give a minus step to ignore this quiterior to end the simulation)
+const long long int par_step=             1e8; // toal timestep (give a minus step to ignore this quiterior to end the simulation)
 const long long int step_log=	          1e4; 
-const long long int step_conf=            1e6; // timestep that output a conf file for restart later
+const long long int step_conf=            2e7; // timestep that output a conf file for restart later
 const long long int step_out=	          1e4; 
 const long long int step_his=             1e4;
 
