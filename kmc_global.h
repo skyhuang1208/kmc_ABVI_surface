@@ -38,12 +38,14 @@ extern FILE * his_srf;		// history file of surface atoms
 extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
 extern FILE * out_sro;		// out file of sro
+extern FILE * out_msd;		// out file of msd
 
 // Parameters for mechanisms
-const double dis_rec=   par_dis_rec; // recombination distance
-const bool   is_genr=   par_isgenr;
-const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
-const double corrfac=   par_corrfac;
+const double dis_rec=       par_dis_rec; // recombination distance
+const bool   is_genr=       par_isgenr;
+const bool   trap_included= par_trap_included;
+const double rate_genr=     par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
+const double corrfac=       par_corrfac;
 
 // Defect lists
 struct vcc{ // information of an vacancy
@@ -52,11 +54,13 @@ struct vcc{ // information of an vacancy
     int ltcp;
 	int ix, iy, iz;
 };
-struct itl{ // information of an interstitial; can declare a vector to store all interstitials
+struct itl{ // information of an interstitial
+    itl(): trapped(false) {}
 	int ltcp;
 	int dir; // direction
 	int head; // the atom of the itl that in the front along the dir; useful for AB itl
 	int ix, iy, iz;
+    bool trapped; // in some cases(low T) AB-itl trapped around B or AB, make it fixed
 };
 extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
@@ -131,7 +135,7 @@ extern void error(int nexit, string errinfo, int nnum=0, double num1=0, double n
 extern void error(int nexit, string errinfo, char c[]);
 extern double ran_generator();
 extern int pbc(int x_, int nx_);
-void write_conf();
+void write_conf(int flag);
 void write_hissol();
 void write_hisdef();
 void write_metrohis();
@@ -139,5 +143,6 @@ void write_rcvcc();
 void write_vdep(); // record how far created vcc go
 int cal_Bnbr(int N_Bnbr, int x, int y, int z);
 double cal_sro();
+double cal_msd();
 
 #endif // KMC_GLOBAL_INCLUDED

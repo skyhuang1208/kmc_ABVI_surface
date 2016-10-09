@@ -34,6 +34,7 @@ FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
 FILE * out_vdep;
 FILE * out_sro;
+FILE * out_msd;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
@@ -114,32 +115,43 @@ int pbc(int x_, int nx_){ // Periodic Boundary Condition
 	else			return (x_ - nx_);
 }
 
-void write_conf(){
+void write_conf(int flag){
+// flag: 0: t0; 1: timestep; 2: time; 3: RESTART
 	ofstream of_xyz;
 	ofstream of_ltcp;
 	
 	// determine the names of conf files
-	if(0==timestep){
+	char name_xyz[40], name_ltcp[40];
+	
+    if(0==flag){ // t0
 		of_xyz.open("t0.xyz");
 		of_ltcp.open("t0.ltcp");
 	}
-	else{
-		char name_xyz[40], name_ltcp[40];
-		sprintf(name_xyz, "%lld", timestep);  strcat(name_xyz, ".xyz");
-		sprintf(name_ltcp, "%lld", timestep); strcat(name_ltcp, ".ltcp");
-		
-		of_xyz.open(name_xyz);
-		of_ltcp.open(name_ltcp);
+	else if(1==flag){ // step
+		sprintf(name_xyz, "%lld.xyz", timestep);    of_xyz.open(name_xyz);
+		sprintf(name_ltcp, "%lld.ltcp", timestep);  of_ltcp.open(name_ltcp);
 	}
+    else if(2==flag){ // time
+		sprintf(name_xyz, "time%.2f.xyz", totaltime);   of_xyz.open(name_xyz);
+		sprintf(name_ltcp, "time%.2f.ltcp", totaltime); of_ltcp.open(name_ltcp);
+    }
+    else of_ltcp.open("RESTART");
 
-	if(!of_xyz.is_open()) error(1, "(write_conf) xyz file is not opened!");		// check
+	if(flag != 3 && !of_xyz.is_open()) error(1, "(write_conf) xyz file is not opened!");		// check
 	if(!of_ltcp.is_open()) error(1, "(write_conf) ltcp file is not opened!");	// check
 	
 	// write out data
-	of_xyz << nx*ny*nz << "\n" << "xyz " << timestep << " ";
-	of_xyz << setprecision(15) << totaltime << "\n";
-	of_ltcp << nx*ny*nz << "\n" << "ltcp " << timestep << " ";
-	of_ltcp << setprecision(15) << totaltime << "\n";
+    if(flag != 3){
+	    of_xyz << nx*ny*nz << "\n" << "xyz " << timestep << " ";
+	    of_xyz << setprecision(15) << totaltime << "\n";
+	    of_ltcp << nx*ny*nz << "\n" << "ltcp " << timestep << " ";
+	    of_ltcp << setprecision(15) << totaltime << "\n";
+    }
+    else{
+	    of_ltcp << nx*ny*nz-nA << "\n" << "ltcp " << timestep << " ";
+	    of_ltcp << setprecision(15) << totaltime << "\n";
+    }
+
 	for(int i=0; i<nx; i ++){
 		for(int j=0; j<ny; j ++){
 			for(int k=0; k<nz; k ++){
@@ -148,7 +160,9 @@ void write_conf(){
 				double z= i*vbra[0][2] + j*vbra[1][2] + k*vbra[2][2];
 			
 				if(-1==states[i][j][k] || 1==states[i][j][k]){
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
+                    if(flag == 3 && states[i][j][k] == 1) continue;
+
+					if(flag != 3) of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " ";
 				    if(srf[i][j][k]) of_ltcp << "1" << endl;
                     else             of_ltcp << "0" << endl;
@@ -156,27 +170,27 @@ void write_conf(){
 				else if (0==states[i][j][k]){
 					int id; for(id=0; id<list_vcc.size() && list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
 					
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
+					if(flag != 3) of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
 
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " " 
 						<< list_vcc[id].ix << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
 				}
                 else if(4==states[i][j][k]){
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
+					if(flag != 3) of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << endl;
 				}
 				else{
 					int id; for(id=0; list_itl[id].ltcp != i*ny*nz+j*nz+k; id ++);
 
 					int type= states[i][j][k];
-					of_xyz  << type << " " << x << " " << y << " " << z << " " << endl; 
+					if(flag != 3) of_xyz  << type << " " << x << " " << y << " " << z << " " << endl; 
 					of_ltcp << type << " " << i << " " << j << " " << k << " "
 						<< list_itl[id].ix << " " << list_itl[id].iy << " " << list_itl[id].iz << " "
 						<< list_itl[id].dir << " " << list_itl[id].head << endl;
 				}
 	}}}
 	
-	of_xyz.close();
+	if(flag != 3) of_xyz.close();
 	of_ltcp.close();
 }
 
@@ -279,7 +293,7 @@ double cal_sro(){
 			for(int k=0; k<nz; k ++){
 				int state0= states[i][j][k];
 
-                if(-1==state0){
+                if(-1==state0 || 3==state0){
                     ncheck ++;
                     int nAnbr= 0;
 
@@ -305,6 +319,27 @@ double cal_sro(){
                 }
     }}}
     
-    if(ncheck != nB) error(2, "(cal_sro) number inconsistent", 2, ncheck, nB);
-    return sro/nB;
+    if(ncheck != (nAB+nB)) error(2, "(cal_sro) number inconsistent", 2, ncheck, nAB+nB);
+    return sro/(nAB+nB);
+}
+
+double cal_msd(){
+    int i, j, k;
+    if((! is_genr) && nV==1){
+        i= list_vcc[0].ix*nx + ((int) (list_vcc[0].ltcp/nz)/ny); // vcc position
+	    j= list_vcc[0].iy*ny + ((int) (list_vcc[0].ltcp/nz)%ny);
+	    k= list_vcc[0].iz*nz + ((int)  list_vcc[0].ltcp%nz);
+    }
+    else if((! is_genr) && (nAA+nAB+nBB)==1){
+        i= list_itl[0].ix*nx + ((int) (list_itl[0].ltcp/nz)/ny); // itl position
+	    j= list_itl[0].iy*ny + ((int) (list_itl[0].ltcp/nz)%ny);
+	    k= list_itl[0].iz*nz + ((int)  list_itl[0].ltcp%nz);
+    }
+    else return -1;
+
+    double x= i*vbra[0][0] + j*vbra[1][0] + k*vbra[2][0];
+	double y= i*vbra[0][1] + j*vbra[1][1] + k*vbra[2][1];
+	double z= i*vbra[0][2] + j*vbra[1][2] + k*vbra[2][2];
+
+    return x*x + y*y + z*z;
 }

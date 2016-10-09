@@ -159,6 +159,8 @@ void class_events::actual_jumpI(int iid, int inbr){
         cvcc_rates += update_ratesC(xi*ny*nz+ yi*nz+ zi);
         cvcc_rates += update_ratesC(x *ny*nz+ y *nz+ z);
     }
+
+    if(trap_included && 3==states[x][y][z]) list_itl[iid].trapped= trap_check(x, y, z); // if trapping included, check if AB itl trapped
 }
 	
 void class_events::create_vcc(int altcp, int mltcp){

@@ -46,10 +46,12 @@ int main(int nArg, char *Arg[]){
 				cout << "  *** neg e: " << events.N_nediff << " ***"; 
                 events.N_nediff= 0;
             }
+            fflush(stdout);
 		}
 
 		if(0==timestep%step_conf || totaltime>=(N_conf+1)*time_conf){
-			write_conf(); 
+			if(0==timestep%step_conf) write_conf(1);
+            else                      write_conf(2);
             cout << "   <Output conf files at: " << timestep << ">";
             N_conf= (int) (totaltime / time_conf);
         }
@@ -58,7 +60,13 @@ int main(int nArg, char *Arg[]){
 			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range());
             fflush(out_engy);
 			fprintf(out_sro,  "%lld %e %f\n", timestep, totaltime, cal_sro());
+            fflush(out_sro);
+            if(1==(nV+nAA+nAB+nBB) && (! is_genr)){
+			    fprintf(out_msd,  "%lld %e %f\n", timestep, totaltime, cal_msd());
+                fflush(out_msd);
+            }
             write_vdep();
+            if(par_isOUTrestart) write_conf(3);
         }
 		
 		if(0==timestep%step_his){
@@ -69,7 +77,7 @@ int main(int nArg, char *Arg[]){
 
 	// finalizing
 	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
-	write_conf(); cout << "<Output conf files at: " << timestep << ">";
+	write_conf(1); cout << "<Output conf files at: " << timestep << ">";
     
     for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
     cout << "\n## vcc creation from srf ##" << endl;

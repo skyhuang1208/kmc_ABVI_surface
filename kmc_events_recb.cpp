@@ -298,6 +298,23 @@ void class_events::sink(bool isvcc, int index){ // execute the sink
 		}
 	}
 }
+
+bool class_events::trap_check(int i, int j, int k){ // check if AB itl trapped
+    if(states[i][j][k] != 3) error(2, "(trap_check) input not AB itl", 1, states[i][j][k]);
+    if(! trap_included)      error(2, "(trap_check) trap_included not turn on");
+    if(temp>1000)            error(2, "(trap_check) T >1000k, should not trap", 1, temp);
+
+    for(int a= 0; a<n1nbr; a ++){
+        int x= pbc(i+v1nbr[a][0], nx);
+        int y= pbc(j+v1nbr[a][1], ny);
+        int z= pbc(k+v1nbr[a][2], nz);
+        
+        if(3==states[x][y][z] || -1==states[x][y][z]) return true; // if near by B or AB, trapped
+    }
+
+    return false; // not trapped
+}
+
 // THE functions that have been deleted. To find them please go to ABVI_fixSINK //
 // void class_events::recb_dir(int index){
 // bool class_events::cal_dis(int d1, int d2, int d3){

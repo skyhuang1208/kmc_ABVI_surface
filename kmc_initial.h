@@ -37,14 +37,16 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "a");
 			    out_vdep= fopen(par_name_vdep, "a");
 			    out_sro = fopen(par_name_sro,  "a");
+			    out_msd = fopen(par_name_msd,  "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
             }
 			else{
 				cout << "START FROM a random configuration..." << endl;
+				if(nArg != 1) error(0, "when restart flag is false, nArg must be 1");
 				ts_bg= 0; time_bg= 0;
 				
 				init_states_array(par_compV, par_compA, par_nMlayer);
-				write_conf();
+				write_conf(0);
 				cout << "Output t0 conf files" << endl;
 				
 			    his_sol = fopen(par_name_sol,  "w");
@@ -53,6 +55,7 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "w");
 			    out_vdep= fopen(par_name_vdep, "w");
 			    out_sro = fopen(par_name_sro,  "w");
+			    out_msd = fopen(par_name_msd,  "w");
                 cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");

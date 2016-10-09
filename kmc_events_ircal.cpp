@@ -11,7 +11,9 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
 	if(nAA + nAB + nBB != list_itl.size()) error(2, "(cal_ratesI) itl number inconsistent");
 	
 	for(int ii=0; ii < list_itl.size(); ii ++){ // ii: index of interstitial
-		int ltcp= list_itl[ii].ltcp;
+		if(list_itl[ii].trapped) continue; // if trapped; cant move; skip
+        
+        int ltcp= list_itl[ii].ltcp;
 		int i= (int) (ltcp/nz)/ny;
 		int j= (int) (ltcp/nz)%ny;
 		int k= (int)  ltcp%nz;
@@ -42,7 +44,7 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
                 if(a==dir1 || a==dir2)  e= emiAA;
                 else                    e= emiAA+erAA;
                 if(ediff>0)             e+= ediff;
-                rates.push_back(cf*muiAA*exp(-beta*e));
+                rates.push_back(muiAA*exp(-beta*e)/cf); // rate_back= rate_for/cf
                 
                 sum_rate += rates.back();
                 etype.push_back(0);

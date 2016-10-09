@@ -81,10 +81,10 @@ double class_events::ecal_bond(int x1, int y1, int z1, int x2, int y2, int z2) c
   
     const int locals= n1nbr + n2nbr +1; // local sites
     double e= 0;
-    for(int i=0; i < AB1.size(); i ++) e += e0AB+e1AB*(AB1[i]*1.0/locals);
-    for(int i=0; i < AB2.size(); i ++) e += e0AB+e1AB*(AB2[i]*1.0/locals)*r21;
-    for(int i=0; i < BV1.size(); i ++) e += e0BV+e1BV*(BV1[i]*1.0/locals);
-    for(int i=0; i < BV2.size(); i ++) e += e0BV+e1BV*(BV2[i]*1.0/locals)*r21;
+    for(int i=0; i < AB1.size(); i ++) e += e0A1B + e1A1B * (AB1[i]*1.0/locals);
+    for(int i=0; i < AB2.size(); i ++) e += e0A2B + e1A2B * (AB2[i]*1.0/locals);
+    for(int i=0; i < BV1.size(); i ++) e += e0B1V + e1B1V / (BV1[i]*1.0/locals); // !! different formula
+    for(int i=0; i < BV2.size(); i ++) e += e0B2V + e1B2V * (BV2[i]*1.0/locals);
     e /= 2; // a bond energy is avg of eAB of 2 atoms
 
     e += 
@@ -171,10 +171,10 @@ double class_events::ecal_nonb(int x1, int y1, int z1, int x2, int y2, int z2) c
 
     const int    locals= n1nbr + n2nbr +1; // local sites
     double e= 0;
-    for(int i=0; i < AB1.size(); i ++) e += e0AB+e1AB*(AB1[i]*1.0/locals);
-    for(int i=0; i < AB2.size(); i ++) e += e0AB+e1AB*(AB2[i]*1.0/locals)*r21;
-    for(int i=0; i < BV1.size(); i ++) e += e0BV+e1BV*(BV1[i]*1.0/locals);
-    for(int i=0; i < BV2.size(); i ++) e += e0BV+e1BV*(BV2[i]*1.0/locals)*r21;
+    for(int i=0; i < AB1.size(); i ++) e += e0A1B + e1A1B * (AB1[i]*1.0/locals);
+    for(int i=0; i < AB2.size(); i ++) e += e0A2B + e1A2B * (AB2[i]*1.0/locals);
+    for(int i=0; i < BV1.size(); i ++) e += e0B1V + e1B1V / (BV1[i]*1.0/locals); // !! different formula
+    for(int i=0; i < BV2.size(); i ++) e += e0B2V + e1B2V * (BV2[i]*1.0/locals);
     
     return e/2; // a bond energy is avg of eAB of 2 atoms
 }
@@ -274,10 +274,10 @@ double class_events::ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int
 	                      eAB2BB * bonds2[0][5] + eAA2BB * bonds2[0][4] + eA2BB * bonds2[0][3]                       + eB2BB * bonds2[0][1] + eBB2BB * bonds2[0][0];
 
     const int    locals= n1nbr + n2nbr +1; // local sites
-    for(int x=1; x<=locals; x ++) e += AB1[x]*(e0AB+e1AB*(x*1.0/locals)); // 1st-nn
-    for(int x=1; x<=locals; x ++) e += AB2[x]*(e0AB+e1AB*(x*1.0/locals))*r21; // 2nd-nn
-    for(int x=1; x<=locals; x ++) e += BV1[x]*(e0BV+e1BV*(x*1.0/locals));
-    for(int x=1; x<=locals; x ++) e += BV2[x]*(e0BV+e1BV*(x*1.0/locals))*r21;
+    for(int x=1; x<=locals; x ++) e += AB1[x] * (e0A1B + e1A1B * (x*1.0/locals)); // 1st-nn
+    for(int x=1; x<=locals; x ++) e += AB2[x] * (e0A2B + e1A2B * (x*1.0/locals)); // 2nd-nn
+    for(int x=1; x<=locals; x ++) e += BV1[x] * (e0B1V + e1B1V / (x*1.0/locals));
+    for(int x=1; x<=locals; x ++) e += BV2[x] * (e0B2V + e1B2V * (x*1.0/locals));
     
 	return e/2;
 }

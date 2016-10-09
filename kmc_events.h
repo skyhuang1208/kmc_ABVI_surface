@@ -88,6 +88,7 @@ class class_events{
         bool recb_checkv(int id);
         void srf_check(int i, int j, int k);
         void sink(bool isvcc, int index); // execute the sink
+        bool trap_check(int i, int j, int k);
 };
 
 #endif // KMC_EVENTS_INCLUDED

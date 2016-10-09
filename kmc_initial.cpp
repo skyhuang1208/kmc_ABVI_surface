@@ -105,7 +105,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
 	// STATE 0: vacancy, 1: A atom, -1: B atom, 4: Vacuum
 
     double pV, pA;
-    bool is_1vcc; // if compV>1, is 1 vcc
+    bool is_1vcc; // if compV>1, is 1 defect
     if(compV >1.0){ is_1vcc= true;  pV= 0;     pA= compA; }
     else          { is_1vcc= false; pV= compV; pA= compA*(1-compV); }
 
@@ -123,8 +123,8 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
 		        }
     }}}
     if(is_1vcc){
-        states[nx/2][ny/2][nz/2]= 0; 
-        cout << "compV gt 1: only 1 vcc\n";
+        states[0][0][0]= par_typeD;
+        cout << "compV gt 1: only 1 defect: " << par_typeD << endl;
     }
 
 	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0;
@@ -154,8 +154,18 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
                             else if(states[x][y][z] != 4) srf[x][y][z]= true;
                         } 
                         nM ++; break;
-                    default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
-	            }
+                    default: // itl
+                        list_itl.push_back(itl());
+	                    list_itl.back().ltcp= i*ny*nz+j*nz+k; 
+	                    list_itl.back().dir= (int) (ran_generator()*n1nbr);
+	                    list_itl.back().head= 1; // choose the ltcp[0] because dir is randomly selected
+	                    list_itl.back().ix= 0; 
+	                    list_itl.back().iy= 0; 
+	                    list_itl.back().iz= 0; 
+	                    if(2==states[i][j][k])      nAA ++;
+                        else if(3==states[i][j][k]) nAB ++;
+                        else                        nBB ++;
+                }
     }}}
 	if(compV>1 && nV != 1) error(1, "(init_states_array) The number of vacancies is not 1", 2, nV, compV); // delete
 #define TOL 0.01
@@ -179,7 +189,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
 	int ntotal;
 	if_re >> ntotal;
-	if(ntotal != nx*ny*nz) error(1, "(read_restart) the input total ltc number isnt consistent", 2, ntotal, nx*ny*nz);
+//	if(ntotal != nx*ny*nz) error(1, "(read_restart) the input total ltc number isnt consistent", 2, ntotal, nx*ny*nz);
 	
 	char c_ltcp[5];
 	if_re >> c_ltcp >> timestep >> time;
@@ -187,11 +197,13 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 	ts_initial= timestep;
 	time_initial= time;
 
-	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0;
-	for(int index=0; index<nx*ny*nz; index ++){	
+    for(int i=0; i<nx*ny*nz; i++) *(&states[0][0][0]+i)= 1;
+
+	nV= 0; nA= nx*ny*nz; nB= 0; nAA= 0; nBB= 0; nAB= 0;
+	for(int index=0; index<ntotal; index ++){	
 		int type, i, j, k, is_srf, ix, iy, iz, dir, head;
 		if_re >> type >> i >> j >> k;
-		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
+//		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
 	
         *(&srf[0][0][0]+index)= false;
 		
@@ -229,6 +241,8 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 			else if (type==-2) nBB ++;
 			else if (type== 3) nAB ++;
 		}
+
+        nA --; // because nA=nx*ny*nz initially
 
 		*(&states[0][0][0]+index)= type;
 	}
