@@ -7,7 +7,7 @@
 using namespace std;
 
 void class_events::genr(){
-	int ltcp[2]; // the chosen 2 ltcps in generating frenkel pair; [0]->itl; [1]->vcc
+    int ltcp[2]; // the chosen 2 ltcps in generating frenkel pair; [0]->itl; [1]->vcc
     double ran;
 
 	do{ // generating itl position: not on ltc occupied by AA, AB, BB, surface atom
@@ -65,7 +65,7 @@ void class_events::genr(){
 		default: error(2, "(genr) an unknown itl type", 1, *(&states[0][0][0]+ltcp[0]));
 	}
 	nV ++;
-
+    
     recb_checki(iid);
     if(list_vcc.size() != 0) recb_checkv(list_vcc.size()-1);
 }

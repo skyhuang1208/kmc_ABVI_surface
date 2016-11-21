@@ -99,6 +99,20 @@ void class_initial::ltc_constructor(){
             if(i>=n3nbr/2) if(v3nbr[i][j] != -v3nbr[i-n3nbr/2][j]) error(1, "(ltc_constructor) v3nbr isn't symmetry");
 		}
 	}
+            
+    // create v12nbr, v123nbr
+    n12nbr=  n1nbr+n2nbr;
+    n123nbr= n1nbr+n2nbr+n3nbr;
+	for(int a=0; a<n1nbr; a ++){ // 1st neighbors
+		v12nbr.push_back( { v1nbr[a][0], v1nbr[a][1], v1nbr[a][2] });
+		v123nbr.push_back({ v1nbr[a][0], v1nbr[a][1], v1nbr[a][2] });
+    }
+	for(int a=0; a<n2nbr; a ++){ // 2nd neighbors
+		v12nbr.push_back( { v2nbr[a][0], v2nbr[a][1], v2nbr[a][2] });
+		v123nbr.push_back({ v2nbr[a][0], v2nbr[a][1], v2nbr[a][2] });
+    }
+	for(int a=0; a<n3nbr; a ++) // 3rd neighbors
+		v123nbr.push_back({ v3nbr[a][0], v3nbr[a][1], v3nbr[a][2] });
 }
 
 void class_initial::init_states_array(double compV, double compA, int nMlayer){
@@ -204,14 +218,16 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		int type, i, j, k, is_srf, ix, iy, iz, dir, head;
 		if_re >> type >> i >> j >> k;
 //		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
-	
-        *(&srf[0][0][0]+index)= false;
+
+        int pid= i*ny*nz+j*nz+k;
+
+        *(&srf[0][0][0] + pid)= false;
 		
         if( 0==type){
 			if_re >> ix >> iy >> iz;
 			
 			list_vcc.push_back(vcc());
-			list_vcc[nV].ltcp= index;
+			list_vcc[nV].ltcp= pid;
 			list_vcc[nV].ix= ix;
 			list_vcc[nV].iy= iy;
 			list_vcc[nV].iz= iz;
@@ -220,7 +236,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		}
         else if(1==type || -1==type){
 		    if_re >> is_srf;
-            *(&srf[0][0][0]+index)= is_srf;
+            *(&srf[0][0][0]+pid)= is_srf;
             
             if( 1==type) nA ++;
 		    if(-1==type) nB ++;
@@ -230,7 +246,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 			if_re >> ix >> iy >> iz >> dir >> head;
 
 			list_itl.push_back(itl());
-			list_itl[nAA+nAB+nBB].ltcp= index;
+			list_itl[nAA+nAB+nBB].ltcp= pid;
 			list_itl[nAA+nAB+nBB].ix= ix;
 			list_itl[nAA+nAB+nBB].iy= iy;
 			list_itl[nAA+nAB+nBB].iz= iz;
@@ -244,14 +260,14 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
         nA --; // because nA=nx*ny*nz initially
 
-		*(&states[0][0][0]+index)= type;
+		*(&states[0][0][0] + pid)= type;
 	}
 	if(nV+nA+nB+nAA+nBB+nAB+nM != nx*ny*nz) error(1, "(read_restart) the number inconsistent", 2, nV+nA+nB+nAA+nBB+nAB+nM, nx*ny*nz);
 
 	cout << "The configuration has been generated from the restart file!" << endl;
 	cout << "Vacancy: " << nV << endl;
-	cout << "Atype A: " << nA << ", pct: " << 100* (double)nA / ntotal << "%" << endl;
-	cout << "Atype B: " << nB << ", pct: " << 100* (double)nB / ntotal << "%" << endl;
+	cout << "Atype A: " << nA << ", pct: " << 100* (double)nA /(nx*ny*nz) << "%" << endl;
+	cout << "Atype B: " << nB << ", pct: " << 100* (double)nB /(nx*ny*nz) << "%" << endl;
 	cout << " Itl AA: " << nAA << endl;
 	cout << " Itl AB: " << nAB << endl;
 	cout << " Itl BB: " << nBB << endl;

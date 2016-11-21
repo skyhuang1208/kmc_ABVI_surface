@@ -41,6 +41,7 @@ const double par_dis_rec=     0.866*3; // recombination distance
 const bool   par_isgenr=         true;
 const double par_dpasm1=         1e-3;
 const bool   par_trap_included= false;
+const bool   par_iscaldsro=     false;
 
 // Ising model energy calculation parameters
 const double par_temp = 2100;

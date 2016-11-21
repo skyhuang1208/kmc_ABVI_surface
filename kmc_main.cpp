@@ -21,8 +21,12 @@ int main(int nArg, char *Arg[]){
 
 	cout << "\n########## The Simulation Begins !! ##########" << endl;
 	timestep=  ts_bg; totaltime= time_bg;
-	cout << "TIMESTEP() TIME(s) GENR()	NA() NB()	NV() NAA() NAB() NBB()	AJUMP_V% AJUMP_I%";
-	printf("\n%d %e %d     %d %d     %d %d %d %d     %f %f", 0, 0.0, 0, nA, nB, nV, nAA, nAB, nBB, 0.0, 0.0);
+    init_sro= cal_sro();
+
+    if(0==timestep){ fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range()); 
+                     fprintf(out_sro,  "%lld %e %e %e %e %e %e %e\n", timestep, totaltime, init_sro, 0.0, 0.0, 0.0, 0.0, 0.0); }
+    cout << "TIMESTEP() TIME(s) GENR()	NA() NB()	NV() NAA() NAB() NBB()	AJUMP_V% AJUMP_I%";
+	printf("\n%lld %.10e %d     %d %d     %d %d %d %d     %f %f", timestep, totaltime, 0, nA, nB, nV, nAA, nAB, nBB, 0.0, 0.0);
     int N_0def= 0;
     int N_conf= 0;
 	while((totaltime<= time_bg+par_time) && (timestep != ts_bg+par_step)){
@@ -57,14 +61,11 @@ int main(int nArg, char *Arg[]){
         }
 
 		if(0==timestep%step_out){
-			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range());
-            fflush(out_engy);
-			fprintf(out_sro,  "%lld %e %f\n", timestep, totaltime, cal_sro());
-            fflush(out_sro);
-            if(1==(nV+nAA+nAB+nBB) && (! is_genr)){
-			    fprintf(out_msd,  "%lld %e %f\n", timestep, totaltime, cal_msd());
-                fflush(out_msd);
-            }
+			fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, events.ecal_range()); fflush(out_engy);
+            double sro= cal_sro();
+            double acc_dsroI= sro - init_sro - acc_dsroV - acc_dsroRi - acc_dsroRv - acc_dsroG;
+			fprintf(out_sro,  "%lld %e %e %e %e %e %e %e\n", timestep, totaltime, sro, acc_dsroI, acc_dsroV, acc_dsroRi, acc_dsroRv, acc_dsroG); fflush(out_sro);
+            if(1==(nV+nAA+nAB+nBB) && (! is_genr)){ fprintf(out_msd,  "%lld %e %f\n", timestep, totaltime, cal_msd()); fflush(out_msd); }
             write_vdep();
             if(par_isOUTrestart) write_conf(3);
         }
@@ -78,16 +79,17 @@ int main(int nArg, char *Arg[]){
 	// finalizing
 	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
 	write_conf(1); cout << "<Output conf files at: " << timestep << ">";
-    
-    for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
-    cout << "\n## vcc creation from srf ##" << endl;
-    cout << "total: " << njump[0] << endl;
-    cout << ", >=1: " << njump[1] << ", >=2: " << njump[2] << ", >=3: " << njump[3] << ", >=4: " << njump[4] << ", >=5: " << njump[5] << endl;
-    cout << ", >=6: " << njump[6] << ", >=7: " << njump[7] << ", >=8: " << njump[8] << ", >=9: " << njump[9] << endl;
-    cout << "recbED at 0: " << njump[10] << endl;
+    cout << "\nAccumulative sro change from vcc: " << acc_dsroV << endl;
+
+//    for(int i=8; i>=0; i --) njump[i] += njump[i+1]; // output ratio of effective vcc creation
+//    cout << "\n## vcc creation from srf ##" << endl;
+//    cout << "total: " << njump[0] << endl;
+//    cout << ", >=1: " << njump[1] << ", >=2: " << njump[2] << ", >=3: " << njump[3] << ", >=4: " << njump[4] << ", >=5: " << njump[5] << endl;
+//    cout << ", >=6: " << njump[6] << ", >=7: " << njump[7] << ", >=8: " << njump[8] << ", >=9: " << njump[9] << endl;
+//    cout << "recbED at 0: " << njump[10] << endl;
 
 	int tfcpu= time(0);
-	cout << "\n**** The simulation is done! Total CPU time: " << tfcpu - t0cpu << " secs ****" << endl;
+	cout << "**** The simulation is done! Total CPU time: " << tfcpu - t0cpu << " secs ****" << endl;
 
 	return 0;
 }

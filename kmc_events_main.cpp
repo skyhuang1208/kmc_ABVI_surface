@@ -53,13 +53,17 @@ double class_events::main(){
 	    double acc_rate= crates/sum_rates; // accumulated rate
 	    for(int i=0; i<rates.size(); i ++){
             if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
-		        switch(etype[i]){
+                double sro0;
+                switch(etype[i]){
                     case 0:  actual_jumpI(ilist[i], inbr[i]); recb_checki(ilist[i]); break;
 			        case 1:  actual_jumpV(ilist[i], inbr[i]); break;
-                    case 7:  genr(); N_genr ++; break;
+                    case 7:  if(iscaldsro) sro0= cal_sro(); 
+                             genr(); N_genr ++; 
+                             if(iscaldsro) acc_dsroG += cal_sro()-sro0;
+                             break;
                     default: error(2, "(main) an unknown event type", 1, etype[i]);
                 }
-                
+
                 goto actionDONE;
             }
 		    
@@ -72,6 +76,9 @@ actionDONE:
 }
 
 void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and jumping atom
+    double sro0;
+    if(iscaldsro) sro0= cal_sro();
+
     int xv= (int) (list_vcc[vid].ltcp/nz)/ny; // vcc position
 	int yv= (int) (list_vcc[vid].ltcp/nz)%ny;
 	int zv= (int)  list_vcc[vid].ltcp%nz;
@@ -85,13 +92,15 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
     if(states[x][y][z]==1)  Vja[0] ++; // track # of jumping atoms (see log file) 
     else                    Vja[1] ++;
 
+//    if(iscalVdsro) acc_dsroV += cal_dsro(xv, yv, zv, x, y, z); // accumulative sro change from vcc
+
 	states[xv][yv][zv]= states[x][y][z];
-	
+
     if(srf[x][y][z]){ // if jump into srf atom, becomes vacuum
         nV --;
         nM ++;
 
-        states[x][y][z]= 4;
+	    states[x][y][z]= 4;
         srf[x][y][z]= false;
         
         if     (list_vcc[vid].njump < 0) {}
@@ -101,7 +110,7 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
         list_vcc.erase(list_vcc.begin()+vid);
     }
     else{
-        states[x][y][z]= 0;
+	    states[x][y][z]= 0;
     	list_vcc[vid].ltcp= x*ny*nz + y*nz + z;
     	if((x-xv)>nx/2) list_vcc[vid].ix --; if((x-xv)<-nx/2) list_vcc[vid].ix ++;
     	if((y-yv)>ny/2) list_vcc[vid].iy --; if((y-yv)<-ny/2) list_vcc[vid].iy ++;
@@ -109,6 +118,7 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
     
         if(list_vcc[vid].njump != -1) list_vcc[vid].njump ++;
         
+        if(iscaldsro) acc_dsroV += cal_sro()-sro0; 
         recb_checkv(vid);
     }
     

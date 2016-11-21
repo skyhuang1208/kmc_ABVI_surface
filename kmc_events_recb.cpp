@@ -133,19 +133,29 @@ bool class_events::recb_checki(int id){
     }
 
     if(list_recb.size() !=0){ //recb
+        double sro0;
+        if(iscaldsro) sro0= cal_sro();
+        
         int ran= (int) ( ran_generator()*list_recb.size() );
         x= list_recb[ran].at(0);
         y= list_recb[ran].at(1);
         z= list_recb[ran].at(2);
         rules_recb(id, i, j, k, -1, x, y, z); // vccID is unknown, give -1
+        
+        if(iscaldsro) acc_dsroRi += cal_sro()-sro0; 
         return true;
     }
     else if(list_AAtoAB.size() !=0){ // AA+B->A+AB
+        double sro0;
+        if(iscaldsro) sro0= cal_sro();
+        
         int ran= (int) ( ran_generator()*list_AAtoAB.size() );
         x= list_AAtoAB[ran].at(0);
         y= list_AAtoAB[ran].at(1);
         z= list_AAtoAB[ran].at(2);
         rules_recb(id, i, j, k, -1, x, y, z); // vccID is unknown, give -1
+        
+        if(iscaldsro) acc_dsroRi += cal_sro()-sro0; 
         return true;
     }
     else return false;
@@ -211,11 +221,16 @@ bool class_events::recb_checkv(int id){
     }
 
     if(list_recb.size() !=0){ //recb
+        double sro0;
+        if(iscaldsro) sro0= cal_sro(); 
+        
         int ran= (int) ( ran_generator()*list_recb.size() );
         x= list_recb[ran].at(0);
         y= list_recb[ran].at(1);
         z= list_recb[ran].at(2);
         rules_recb(-1, x, y, z, id, i, j, k); // itlID is unknown, give -1
+        
+        if(iscaldsro) acc_dsroRv += cal_sro()-sro0; 
         return true;
     }
     else return false;

@@ -20,6 +20,9 @@ extern double vbra[3][3];	// coordinate vectors of bravice lattice
 extern int n1sp, n2sp;
 extern int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
 extern int v2sp[MAX_NNBR][MAX_NNBR][3];
+extern int n12nbr, n123nbr;
+extern vector < vector<int> > v12nbr;
+extern vector < vector<int> > v123nbr;
 
 // System
 const int nx=  par_nx;
@@ -46,6 +49,7 @@ const bool   is_genr=       par_isgenr;
 const bool   trap_included= par_trap_included;
 const double rate_genr=     par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
 const double corrfac=       par_corrfac;
+const bool   iscaldsro=     par_iscaldsro;
 
 // Defect lists
 struct vcc{ // information of an vacancy
@@ -69,6 +73,11 @@ extern vector <int> list_sink;  // A list contains atoms in the sink
 extern int N_genr;
 extern int njump[10];
 extern long long int Vja[2], Ija[2];
+extern double init_sro;
+extern double acc_dsroV; // accumulative sro change from vcc
+extern double acc_dsroG; // accumulative sro change from genr
+extern double acc_dsroRi; // accumulative sro change from recb
+extern double acc_dsroRv; // accumulative sro change from recb
 
 // Migration parameters
 const double temp= par_temp; 
@@ -144,5 +153,6 @@ void write_vdep(); // record how far created vcc go
 int cal_Bnbr(int N_Bnbr, int x, int y, int z);
 double cal_sro();
 double cal_msd();
+double cal_dsro(int xv, int yv, int zv, int xa, int ya, int za); // cal sro change during vcc jump
 
 #endif // KMC_GLOBAL_INCLUDED

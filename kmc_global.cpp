@@ -22,6 +22,9 @@ double vbra[3][3];	// coordinate vectors of bravice lattice
 int n1sp, n2sp;
 int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
 int v2sp[MAX_NNBR][MAX_NNBR][3];
+int n12nbr, n123nbr;
+vector < vector<int> > v12nbr;
+vector < vector<int> > v123nbr;
 
 int nA, nB, nV, nAA, nBB, nAB, nM;
 int sum_mag; // sum of magnitization; should be conserved
@@ -44,6 +47,11 @@ int N_genr= 0;
 int njump[10]= {0};
 long long int Vja[2]= {0};
 long long int Ija[2]= {0};
+double init_sro;
+double acc_dsroV=  0;
+double acc_dsroG=  0;
+double acc_dsroRi= 0;
+double acc_dsroRv= 0;
 
 double h0;
 double c1_44, c1_43, c1_42, c1_41, c1_33, c1_32, c1_31, c1_22, c1_21, c1_11, c1_40, c1_30, c1_20, c1_10, c1_00;
@@ -281,6 +289,71 @@ int cal_Bnbr(int N_Bnbr, int x, int y, int z){
         return n;
     }
     else return N_Bnbr;
+}
+
+double cal_dsro(int xv, int yv, int zv, int xa, int ya, int za){ // cal sro change during vcc jump
+    int stateV= states[xv][yv][zv];
+    int stateA= states[xa][ya][za];
+    if(stateV != 0)                 error(1, "(cal_dsro) supposed to be a vcc", 1, stateV);
+    if(stateA != 1 && stateA != -1) error(1, "(cal_dsro) supposed to be a atom", 1, stateA);
+
+    vector < vector<int> > list_cal(3);
+    if(-1==stateA){ // A itself
+        list_cal[0].push_back(xv); list_cal[0].push_back(xa);
+        list_cal[1].push_back(yv); list_cal[1].push_back(ya);
+        list_cal[2].push_back(zv); list_cal[2].push_back(za);
+    }
+    for(int a=0; a<n12nbr; a ++){ // V's neighbors
+	    int x= pbc(xv+v12nbr[a][0], nx);
+		int y= pbc(yv+v12nbr[a][1], ny);
+		int z= pbc(zv+v12nbr[a][2], nz);
+        if(-1==states[x][y][z]){
+            list_cal[0].push_back(x);
+            list_cal[1].push_back(y);
+            list_cal[2].push_back(z);
+        }
+    }
+    for(int a=0; a<n12nbr; a ++){ // A's neighbors
+	    int x= pbc(xa+v12nbr[a][0], nx);
+		int y= pbc(ya+v12nbr[a][1], ny);
+		int z= pbc(za+v12nbr[a][2], nz);
+        if(-1==states[x][y][z]){
+            list_cal[0].push_back(x);
+            list_cal[1].push_back(y);
+            list_cal[2].push_back(z);
+        }
+    }
+
+    double cA= nA*1.0/(nx*ny*nz);
+    double dsro= 0;
+    for(int a=-1; a<=1; a +=2){ // before(-1) & after(+1)
+        for(int b= 0; b<list_cal[0].size(); b ++){
+            int i= list_cal[0].at(b);
+            int j= list_cal[1].at(b);
+            int k= list_cal[2].at(b);
+    	
+            if(states[i][j][k] != -1) continue;
+
+            int nAnbr= 0;
+	        for(int c=0; c<n12nbr; c ++){ // 1st, 2nd neighbors
+	            int x= pbc(i+v12nbr[c][0], nx);
+		        int y= pbc(j+v12nbr[c][1], ny);
+		        int z= pbc(k+v12nbr[c][2], nz);
+                int state1= states[x][y][z];
+
+                if(1==state1) nAnbr ++;
+            }
+    
+            dsro += a * (1.0 - nAnbr*1.0/(n1nbr+n2nbr)/cA);
+        }
+        
+        states[xv][yv][zv]= stateA; // do jump
+        states[xa][ya][za]= stateV;
+    } 
+    states[xv][yv][zv]= stateV; // restore
+    states[xa][ya][za]= stateA;
+    
+    return dsro / (nAB+nB);
 }
 
 double cal_sro(){
