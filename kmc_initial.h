@@ -43,7 +43,8 @@ class class_initial{
 			    out_vdep= fopen(par_name_vdep, "a");
 			    out_eSGC= fopen(par_name_eSGC, "a");
 			    out_sro = fopen(par_name_sro,  "a");
-				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
+			    out_log = fopen(par_name_log,  "a");
+				cout << "Open history files and output files with append mode" << endl;
             }
 			else{
 				cout << "START FROM a random configuration..." << endl;
@@ -60,7 +61,8 @@ class class_initial{
 			    out_vdep= fopen(par_name_vdep, "w");
 			    out_eSGC= fopen(par_name_eSGC, "w");
 			    out_sro = fopen(par_name_sro,  "w");
-                cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
+			    out_log = fopen(par_name_log,  "w");
+				cout << "Open history files and output files with written mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
 			if(NULL==his_def)  error(2, "(class_events) the vacancy history file was not opened!");
@@ -71,7 +73,6 @@ class class_initial{
 			mag= 2*nAA + 1*nA -1*nB -2*nBB;
 
 			init_par();
-			init_uncorrH();
 		}
 		
 	private:

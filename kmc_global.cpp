@@ -33,14 +33,7 @@ FILE * out_engy;	// out file of energy calculations
 FILE * out_vdep;
 FILE * out_eSGC;    // out file of semi-canonical ensemble e
 FILE * out_sro;
-
-vector <vcc> list_vcc;	 // A list containing information of all vacancies
-vector <itl> list_itl;   // A list containing information of all interstitials
-
-int N_genr= 0;
-int njump[10]= {0};
-long long int Vja[2]= {0};
-long long int Ija[2]= {0};
+FILE * out_log;
 
 double h0;
 double c1_44, c1_43, c1_42, c1_41, c1_33, c1_32, c1_31, c1_22, c1_21, c1_11, c1_40, c1_30, c1_20, c1_10, c1_00;
@@ -112,12 +105,16 @@ int pbc(int x_, int nx_){ // Periodic Boundary Condition
 	else			return (x_ - nx_);
 }
 
-void write_conf(){
+void write_conf(bool isRESTART){
 	ofstream of_xyz;
 	ofstream of_ltcp;
 	
 	// determine the names of conf files
-	if(0==timestep){
+    if(isRESTART){
+//		of_xyz.open("RESTART.xyz");
+		of_ltcp.open("RESTART");
+    }
+    else if(0==timestep){
 		of_xyz.open("t0.xyz");
 		of_ltcp.open("t0.ltcp");
 	}
@@ -130,14 +127,20 @@ void write_conf(){
 		of_ltcp.open(name_ltcp);
 	}
 
-	if(!of_xyz.is_open()) error(1, "(write_conf) xyz file is not opened!");		// check
+	if((! isRESTART) && (!of_xyz.is_open())) error(1, "(write_conf) xyz file is not opened!");		// check
 	if(!of_ltcp.is_open()) error(1, "(write_conf) ltcp file is not opened!");	// check
 	
 	// write out data
-	of_xyz << nx*ny*nz << "\n" << "xyz " << timestep << " ";
-	of_xyz << setprecision(15) << totaltime << "\n";
-	of_ltcp << nx*ny*nz << "\n" << "ltcp " << timestep << " ";
-	of_ltcp << setprecision(15) << totaltime << "\n";
+    if(isRESTART){
+	    of_ltcp << nx*ny*nz-nA << "\n" << "ltcp " << timestep << " ";
+	    of_ltcp << setprecision(15) << totaltime << "\n";
+    }
+    else{
+	    of_xyz << nx*ny*nz << "\n" << "xyz " << timestep << " ";
+	    of_xyz << setprecision(15) << totaltime << "\n";
+	    of_ltcp << nx*ny*nz << "\n" << "ltcp " << timestep << " ";
+	    of_ltcp << setprecision(15) << totaltime << "\n";
+    }
 	for(int i=0; i<nx; i ++){
 		for(int j=0; j<ny; j ++){
 			for(int k=0; k<nz; k ++){
@@ -145,68 +148,25 @@ void write_conf(){
 				double y= i*vbra[0][1] + j*vbra[1][1] + k*vbra[2][1];
 				double z= i*vbra[0][2] + j*vbra[1][2] + k*vbra[2][2];
 			
-				if(-1==states[i][j][k] || 1==states[i][j][k]){
+                if( 1==states[i][j][k] && (! isRESTART)){
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " ";
-				    if(srf[i][j][k]) of_ltcp << "1" << endl;
-                    else             of_ltcp << "0" << endl;
+                    of_ltcp << "0" << endl; // is_srf
+                }
+				if(-1==states[i][j][k]){
+					if(! isRESTART) of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
+					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " ";
+                    of_ltcp << "0" << endl; // is_srf
                 }
 				else if (0==states[i][j][k] && (! itlAB[i][j][k])){
-					int id; for(id=0; id<list_vcc.size() && list_vcc[id].ltcp != i*ny*nz+j*nz+k; id ++);
-					
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
+					if(! isRESTART) of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
 
-					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " " 
-						<< list_vcc[id].ix << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
-				}
-                else if(4==states[i][j][k]){
-					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;
-					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << endl;
-				}
-				else{
-					int id; for(id=0; list_itl[id].ltcp != i*ny*nz+j*nz+k; id ++);
-
-					int type= states[i][j][k];
-					if(0==type) type= 3;
-					of_xyz  << type << " " << x << " " << y << " " << z << " " << endl; 
-					of_ltcp << type << " " << i << " " << j << " " << k << " "
-						<< list_itl[id].ix << " " << list_itl[id].iy << " " << list_itl[id].iz << " "
-						<< list_itl[id].dir << " " << list_itl[id].head << endl;
+					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " " << "0 0 0" << endl;
 				}
 	}}}
 	
 	of_xyz.close();
 	of_ltcp.close();
-}
-
-void write_hissol(){
-	int ncheck= 0;
-    vector <int> list_srf; // A list store srf info
-
-    // OUTPUT his_sol
-	fprintf(his_sol, "%d\n", nB);
-	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
-	for(int i=0; i<nx*ny*nz; i++){
-		if( -1== *(&states[0][0][0]+i) ){
-			ncheck ++;
-			fprintf(his_sol, "%d\n", i);
-		}
-	}
-}
-
-void write_hisdef(){
-	// OUTPUT his_def
-    fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
-	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
-    
-    for(int i=0; i<list_vcc.size(); i++){
-		fprintf(his_def, "0 %d %d %d %d\n", list_vcc[i].ltcp, list_vcc[i].ix, list_vcc[i].iy, list_vcc[i].iz);
-	}
-	for(int i=0; i<list_itl.size(); i++){
-		int type= *(&states[0][0][0]+list_itl[i].ltcp);
-		if(0==type) type= 3;
-		fprintf(his_def, "%d %d %d %d %d\n", type, list_itl[i].ltcp, list_itl[i].ix, list_itl[i].iy, list_itl[i].iz);
-	}
 }
 
 void write_metrohis(){
@@ -215,7 +175,7 @@ void write_metrohis(){
     
     fprintf(his_sol, "%d\n", nB);
 	fprintf(his_sol, "T: %lld %e\n", timestep, totaltime);
-    fprintf(his_def, "%lu\n", list_vcc.size()+list_itl.size());
+    fprintf(his_def, "%d\n", nV);
 	fprintf(his_def, "T: %lld %e\n", timestep, totaltime);
 	for(int i=0; i<nx*ny*nz; i++){
 		if( -1== *(&states[0][0][0]+i) ){

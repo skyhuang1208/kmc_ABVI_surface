@@ -11,6 +11,7 @@ double cal_sro();
 
 int main(int nArg, char *Arg[]){
 	int t0cpu= time(0);
+    int tHIS= t0cpu; // control history output freq.
 
 	long long int ts_bg;
 	double time_bg;
@@ -21,8 +22,8 @@ int main(int nArg, char *Arg[]){
 
 	cout << "\n########## The Simulation Begins !! ##########" << endl;
 	timestep=  ts_bg;
-	cout << "TIMESTEP() TIME(s) GENR()	NA() NB()	NV() NAA() NAB() NBB()	AJUMP_V% AJUMP_I%";
-	printf("\n%d %e %d     %d %d     %d %d %d %d", 0, 0.0, 0, nA, nB, nV, nAA, nAB, nBB);
+	cout << "TIMESTEP() TIME(s) NA() NV()";
+	printf("\n%d %e %d %d %d", 0, 0.0, nA, nB, nV);
     long long int N_attempt= 0, sum_att= 0;
     int N_stuck= 0;
     while(timestep != par_step){ // !! Warning: when restart it runs until par_step not plus !!
@@ -82,15 +83,20 @@ int main(int nArg, char *Arg[]){
 		// OUTPUT DATA
 		if(0==timestep%step_log){
             cout << endl;
-            printf("%lld %.10e %d     %d %d     %d %d %d %d  %f", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB, sum_att*1.0/step_log);
+            printf("%lld %f %d %d %d", timestep, 0.0, nA, nB, nV); fflush(stdout);
+            fprintf(out_log, "%lld %f %d %d %d\n", timestep, 0.0, nA, nB, nV); fflush(out_log);
             sum_att= 0;
         }
-		if(0==timestep%step_his) write_metrohis();
+		if(0==timestep%step_his && (time(0)-tHIS)>tcpu_his){
+            write_metrohis();
+            tHIS= time(0);
+        }
 		if(0==timestep%step_out){ 
             double etotal= ecal_range();
-            fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, etotal); fflush(out_engy);
-            fprintf(out_eSGC, "%lld %e %f\n", timestep, totaltime, etotal+mu*(nA-nB)); fflush(out_eSGC);
-            fprintf(out_sro, "%lld %e %f\n", timestep, totaltime, cal_sro()); fflush(out_sro);
+            fprintf(out_engy, "%lld %e %f\n", timestep, 0.0, etotal); fflush(out_engy);
+            fprintf(out_eSGC, "%lld %e %f\n", timestep, 0.0, etotal+mu*(nA-nB)); fflush(out_eSGC);
+            fprintf(out_sro, "%lld %e %f\n", timestep, 0.0, cal_sro()); fflush(out_sro);
+            write_conf(true);
         }
 		if(0==timestep%step_conf){ write_conf(); cout << "   <Output conf files at: " << timestep << ">";}
 
@@ -104,9 +110,9 @@ int main(int nArg, char *Arg[]){
 	}
 
 	// finalizing
-	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d	%d %d %d %d ", timestep, totaltime, N_genr, nA, nB, nV, nAA, nAB, nBB);
-	if(timestep%step_out != 0) fprintf(out_engy, "%lld %e %f\n", timestep, totaltime, ecal_range());
-	if(N_stuck != 0) cout << "<N of stuck: " << N_stuck << ">";
+	if(timestep%step_log != 0) printf("\n%lld %f %d	%d %d", timestep, 0.0, nA, nB, nV);
+	
+    if(N_stuck != 0) cout << "<N of stuck: " << N_stuck << ">";
 	write_conf(); cout << "<Output conf files at: " << timestep << ">";
     
 	int tfcpu= time(0);

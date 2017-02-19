@@ -31,6 +31,8 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
     int N_Bnbr[nx][ny][nz]= {0}; // local B concentration
     int N_AB1[25]= {0}; // Nbonds for diff B concentrations for 1st-nn
     int N_AB2[25]= {0}; // Nbonds for diff B concentrations for 2nd-nn
+    int N_BV1[25]= {0}; // BV 1st-nn
+    int N_BV2[25]= {0}; // BV 2nd-nn
 
     for(int a=0; a<n1nbr; a ++){ // 1st neighbors
 		int xj= pbc(xi+(*(v1nbr+a))[0], nx);
@@ -44,6 +46,10 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
             N_Bnbr[xi][yi][zi]= cal_Bnbr(N_Bnbr[xi][yi][zi], xi, yi, zi);
             N_AB1[N_Bnbr[xi][yi][zi]] ++;
         }
+        if((0==state_i && -1==state_j1) || (-1==state_i && 0==state_j1)){ 
+            N_Bnbr[xi][yi][zi]= cal_Bnbr(N_Bnbr[xi][yi][zi], xi, yi, zi);
+            N_BV1[N_Bnbr[xi][yi][zi]] ++;
+        }
         for(int b=0; b<n1nbr; b ++){ // search 1st-nn for AB bonds
 		    int xk= pbc(xj+(*(v1nbr+b))[0], nx);
 		    int yk= pbc(yj+(*(v1nbr+b))[1], ny);
@@ -53,6 +59,10 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
             if((1==state_j1 && -1==state_k1) || (-1==state_j1 && 1==state_k1)){ // AB bond for j1k1
                 N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
                 N_AB1[N_Bnbr[xj][yj][zj]] ++;
+            }
+            if((0==state_j1 && -1==state_k1) || (-1==state_j1 && 0==state_k1)){
+                N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
+                N_BV1[N_Bnbr[xj][yj][zj]] ++;
             }
 	    }
 	    for(int b=0; b<n2nbr; b ++){ // search 2nd-nn for AB bonds
@@ -64,6 +74,10 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
             if((1==state_j1 && -1==state_k2) || (-1==state_j1 && 1==state_k2)){ // AB bond for j1k2
                 N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
                 N_AB2[N_Bnbr[xj][yj][zj]] ++;
+            }
+            if((0==state_j1 && -1==state_k2) || (-1==state_j1 && 0==state_k2)){
+                N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
+                N_BV2[N_Bnbr[xj][yj][zj]] ++;
             }
         }
     }
@@ -80,6 +94,10 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
             N_Bnbr[xi][yi][zi]= cal_Bnbr(N_Bnbr[xi][yi][zi], xi, yi, zi);
             N_AB2[N_Bnbr[xi][yi][zi]] ++;
         }
+        if((0==state_i && -1==state_j2) || (-1==state_i && 0==state_j2)){
+            N_Bnbr[xi][yi][zi]= cal_Bnbr(N_Bnbr[xi][yi][zi], xi, yi, zi);
+            N_BV2[N_Bnbr[xi][yi][zi]] ++;
+        }
         for(int b=0; b<n1nbr; b ++){ // search 1st-nn for AB bonds
 		    int xk= pbc(xj+(*(v1nbr+b))[0], nx);
 		    int yk= pbc(yj+(*(v1nbr+b))[1], ny);
@@ -89,6 +107,10 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
             if((1==state_j2 && -1==state_k1) || (-1==state_j2 && 1==state_k1)){ // AB bond for j2k1
                 N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
                 N_AB1[N_Bnbr[xj][yj][zj]] ++;
+            }
+            if((0==state_j2 && -1==state_k1) || (-1==state_j2 && 0==state_k1)){
+                N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
+                N_BV1[N_Bnbr[xj][yj][zj]] ++;
             }
 	    }
 	    for(int b=0; b<n2nbr; b ++){ // search 2nd-nn for AB bonds
@@ -101,22 +123,28 @@ double ecal_one(int xi, int yi, int zi){ // use only for ABV metropolis MC
                 N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
                 N_AB2[N_Bnbr[xj][yj][zj]] ++;
             }
+            if((0==state_j2 && -1==state_k2) || (-1==state_j2 && 0==state_k2)){
+                N_Bnbr[xj][yj][zj]= cal_Bnbr(N_Bnbr[xj][yj][zj], xj, yj, zj);
+                N_BV2[N_Bnbr[xj][yj][zj]] ++;
+            }
         }
 	}
 
     double e= 0; // eAB(X)(1st)+eAB(X)(2nd)= w0+w1*X +0.5(eAA(1)+eBB(1)) +0.5(eAA(2)+eBB(2))
-    const double e0AB= w0AB + 0.5*(eA1A+eB1B+eA2A+eB2B); // constant of eAB
-    const double Nn12= n1nbr + n2nbr;
-    for(int x=1; x<(n1nbr+n2nbr); x ++) e += N_AB1[x] * (e0AB+w1AB*(x/Nn12)) /(1+r21); // 1st-nn
-    for(int x=1; x<(n1nbr+n2nbr); x ++) e += N_AB2[x] * (e0AB+w1AB*(x/Nn12)) /(1+r21)*r21; // 2nd-nn
+   
+    const int    locals= n1nbr + n2nbr +1; // local sites
+    for(int x=1; x<=locals; x ++) e += N_AB1[x] * (e0A1B + e1A1B*(x*1.0/locals)); // 1st-nn
+    for(int x=1; x<=locals; x ++) e += N_AB2[x] * (e0A2B + e1A2B*(x*1.0/locals)); // 2nd-nn
+    for(int x=1; x<=locals; x ++) e += N_BV1[x] * (e0B1V + e1B1V/(x*1.0/locals)); // 1st-nn(!! different formula)
+    for(int x=1; x<=locals; x ++) e += N_BV2[x] * (e0B2V + e1B2V*(x*1.0/locals)); // 2nd-nn
 	e /= 2.0; // AB bond contribution
 	
     e+= eA1A * bonds1[3][3] + eA1V * bonds1[3][2] + 
-	    eA1V * bonds1[2][3] + eV1V * bonds1[2][2] + eV1B  * bonds1[2][1] +
-                              eV1B * bonds1[1][2] + eB1B  * bonds1[1][1] +
+	    eA1V * bonds1[2][3] + eV1V * bonds1[2][2] + 0                    +
+                              0                   + eB1B  * bonds1[1][1] +
         eA2A * bonds2[3][3] + eA2V * bonds2[3][2] +
-	    eA2V * bonds2[2][3] + eV2V * bonds2[2][2] + eV2B  * bonds2[2][1] +
-	                          eV2B * bonds2[1][2] + eB2B  * bonds2[1][1];
+	    eA2V * bonds2[2][3] + eV2V * bonds2[2][2] + 0                    +
+	                          0                   + eB2B  * bonds2[1][1];
 
 	return e;
 }
@@ -126,6 +154,8 @@ double ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int zhi){
 	int bonds2[7][7]= {0}; // 2nd nn
     int AB1[25]= {0}; // AB for diff B concentrations for 1st-nn
     int AB2[25]= {0}; // AB for diff B concentrations for 2nd-nn
+    int BV1[25]= {0}; // BV 1st-nn
+    int BV2[25]= {0}; // BV 2nd-nn
 
 	for(int ii= xlo; ii<= xhi; ii ++){ // includes
 		for(int jj= ylo; jj<= yhi; jj ++){
@@ -150,6 +180,10 @@ double ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int zhi){
                         nBnbr= cal_Bnbr(nBnbr, i, j, k);
                         AB1[nBnbr] ++;
                     }
+                    if((-1==state0 && 0==state1a) || (0==state0 && -1==state1a)){
+                        nBnbr= cal_Bnbr(nBnbr, i, j, k);
+                        BV1[nBnbr] ++;
+                    }
 				}
 	
 				for(int b=0; b<n2nbr; b ++){ // 2nd neighbors
@@ -166,20 +200,25 @@ double ecal_range(int xlo, int xhi, int ylo, int yhi, int zlo, int zhi){
                         nBnbr= cal_Bnbr(nBnbr, i, j, k);
                         AB2[nBnbr] ++;
                     }
+                    if((-1==state0 && 0==state1b) || (0==state0 && -1==state1b)){
+                        nBnbr= cal_Bnbr(nBnbr, i, j, k);
+                        BV2[nBnbr] ++;
+                    }
 				}
 	}}}
 	
-	double e= eA1A * bonds1[3][3] + eA1V * bonds1[3][2] + eA1B * 0 +
-	          eA1V * bonds1[2][3] + eV1V * bonds1[2][2] + eV1B * bonds1[2][1] +
-	          eA1B * 0            + eV1B * bonds1[1][2] + eB1B * bonds1[1][1] +
-	          eA2A * bonds2[3][3] + eA2V * bonds2[3][2] + eA2B * 0 +
-	          eA2V * bonds2[2][3] + eV2V * bonds2[2][2] + eV2B * bonds2[2][1] +
-	          eA2B * 0            + eV2B * bonds2[1][2] + eB2B * bonds2[1][1];
+	double e= eA1A * bonds1[3][3] + eA1V * bonds1[3][2] + 0                   +
+	          eA1V * bonds1[2][3] + eV1V * bonds1[2][2] + 0                   +
+	          0                   + 0                   + eB1B * bonds1[1][1] +
+	          eA2A * bonds2[3][3] + eA2V * bonds2[3][2] + 0                   +
+	          eA2V * bonds2[2][3] + eV2V * bonds2[2][2] + 0                   +
+	          0                   + 0                   + eB2B * bonds2[1][1];
     
-    const double e0AB= w0AB + 0.5*(eA1A+eB1B+eA2A+eB2B); // constant of eAB
-    const double Nn12= n1nbr + n2nbr;
-    for(int x=1; x<(n1nbr+n2nbr); x ++) e += AB1[x] * (e0AB+w1AB*(x/Nn12)) /(1+r21); // 1st-nn
-    for(int x=1; x<(n1nbr+n2nbr); x ++) e += AB2[x] * (e0AB+w1AB*(x/Nn12)) /(1+r21)*r21; // 2nd-nn
+    const int    locals= n1nbr + n2nbr +1; // local sites
+    for(int x=1; x<=locals; x ++) e += AB1[x] * (e0A1B + e1A1B*(x*1.0/locals)); // 1st-nn
+    for(int x=1; x<=locals; x ++) e += AB2[x] * (e0A2B + e1A2B*(x*1.0/locals)); // 2nd-nn
+    for(int x=1; x<=locals; x ++) e += BV1[x] * (e0B1V + e1B1V/(x*1.0/locals)); // 1st-nn(!! different formula)
+    for(int x=1; x<=locals; x ++) e += BV2[x] * (e0B2V + e1B2V*(x*1.0/locals)); // 2nd-nn
 
 	return e/2;
 }

@@ -38,6 +38,7 @@ extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
 extern FILE * out_eSGC;    // out file of semi-canonical ensemble e
 extern FILE * out_sro;
+extern FILE * out_log;
 
 // Parameters for mechanisms
 const bool is_noflckr= par_isnoflckr;   // if on, more than 1 jump for vcc creation on srf (no flickering)
@@ -47,51 +48,9 @@ const double dis_rec=  par_dis_rec;	// recombination distance
 const double rate_genr= par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
 const double mu= par_mu; // chemical potential
 
-// Defect lists
-struct vcc{ // information of an vacancy
-    vcc(): njump(-1) {}	
-    int njump;
-    int ltcp;
-	int ix, iy, iz;
-};
-struct itl{ // information of an interstitial; can declare a vector to store all interstitials
-	int ltcp;
-	int dir; // direction
-	int head; // the atom of the itl that in the front along the dir; useful for AB itl
-	int ix, iy, iz;
-};
-extern vector <vcc> list_vcc;	// A list contains information of all vacancies
-extern vector <itl> list_itl;  	// A list contains information of all interstitials
-
-extern int N_genr;
-extern int njump[10];
-extern long long int Vja[2], Ija[2];
-
 // Migration parameters
 const double temp= par_temp; 
 const double beta= par_beta;
-
-const double nuvA= par_nuvA; 
-const double nuvB= par_nuvB; 
-const double nuiA= par_nuiA; 
-const double nuiB= par_nuiB; 
-
-const double emvA= par_emvA;
-const double emvB= par_emvB;
-const double emiA= par_emiA;
-const double emiB= par_emiB;
-
-const double emiAA= par_emiAA;       // !!! only for DubeyCMS2015
-const double emiAB= par_emiAB;       // !!!
-const double emiBB= par_emiBB;       // !!!
-const double eciAAtAB= par_eciAAtAB; // !!!
-const double eciABtAA= par_eciABtAA; // !!!
-const double eciABtBB= par_eciABtBB; // !!!
-const double eciBBtAB= par_eciBBtAB; // !!!
-
-const double erAA= par_erAA; // rotation energy barrier
-const double erAB= par_erAB;
-const double erBB= par_erBB;
 
 // Ising model energy constants
 extern double h0;
@@ -113,9 +72,7 @@ extern void error(int nexit, string errinfo, int nnum=0, double num1=0, double n
 extern void error(int nexit, string errinfo, char c[]);
 extern double ran_generator();
 extern int pbc(int x_, int nx_);
-void write_conf();
-void write_hissol();
-void write_hisdef();
+void write_conf(bool isRESTART=false);
 void write_rcvcc();
 void write_vdep(); // record how far created vcc go
 void write_metrohis();
