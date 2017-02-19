@@ -29,19 +29,19 @@ double class_events::main(){
     if(abs(sum_rates)<1e-10) error(2, "(main) rate= 0, end up simulation");
 
     // check
-    if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz); // check
+    if(nA+nB+nV+nAA+nBB+nAB+nM != nx*ny*nz) error(2, "(jump) numbers of ltc points arent consistent, diff=", 1, nA+nB+nV+nAA+nBB+nAB+nM-nx*ny*nz);
 //    if(2*nAA+nA-nB-2*nBB       != sum_mag)  error(2, "(jump) magnitization isnt conserved", 2, 2*nAA+nA-nB-2*nBB, sum_mag);
 
     // perform the actual jump
 	double ran= ran_generator();
         
-    if(ran < crates/sum_rates){ // vcc creation
+    if(ran < crates/sum_rates){ // vcc creation from srf
         double acc_cr= 0;
         for(auto it= cvcc.begin(); it != cvcc.end(); it ++){
-            for(int a=0; a< (it->second).rates.size(); a ++){ // access creation paths of the atom
+            for(int a=0; a< (it->second).rates.size(); a ++){ // loop tho creation paths of the atom
                 double rate_a= (it->second).rates[a];
                 if( (ran >= acc_cr) && (ran < (acc_cr + rate_a/sum_rates) ) ){
-                    create_vcc(it->first, (it->second).mltcp[a]); 
+                    create_vcc(it->first, (it->second).mltcp[a]);
                     goto actionDONE;
                 }
                         
@@ -52,7 +52,7 @@ double class_events::main(){
     else{ // jump & genr
 	    double acc_rate= crates/sum_rates; // accumulated rate
 	    for(int i=0; i<rates.size(); i ++){
-            if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){			
+            if( (ran >= acc_rate) && (ran < (acc_rate + rates[i]/sum_rates) ) ){
                 double sro0;
                 switch(etype[i]){
                     case 0:  actual_jumpI(ilist[i], inbr[i]); recb_checki(ilist[i]); break;
@@ -75,13 +75,13 @@ actionDONE:
     return 1.0/sum_rates;
 }
 
-void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and jumping atom
+void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor id
     double sro0;
     if(iscaldsro) sro0= cal_sro();
 
-    int xv= (int) (list_vcc[vid].ltcp/nz)/ny; // vcc position
-	int yv= (int) (list_vcc[vid].ltcp/nz)%ny;
-	int zv= (int)  list_vcc[vid].ltcp%nz;
+    int xv= list_vcc[vid].x; // vcc position
+	int yv= list_vcc[vid].y;
+	int zv= list_vcc[vid].z;
     if(states[xv][yv][zv] != 0) error(2, "(actual_jumpV) the jumping vcc is not a vcc (type)", 1, states[xv][yv][zv]);
 
 	int x= pbc(xv+v1nbr[inbr][0], nx);
@@ -92,8 +92,6 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
     if(states[x][y][z]==1)  Vja[0] ++; // track # of jumping atoms (see log file) 
     else                    Vja[1] ++;
 
-//    if(iscalVdsro) acc_dsroV += cal_dsro(xv, yv, zv, x, y, z); // accumulative sro change from vcc
-
 	states[xv][yv][zv]= states[x][y][z];
 
     if(srf[x][y][z]){ // if jump into srf atom, becomes vacuum
@@ -103,15 +101,17 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
 	    states[x][y][z]= 4;
         srf[x][y][z]= false;
         
-        if     (list_vcc[vid].njump < 0) {}
-        else if(list_vcc[vid].njump > 9) njump[9] ++;
-        else                             njump[list_vcc[vid].njump] ++;
+//        if     (list_vcc[vid].njump < 0) {} // track how long can a vcc from srf can go
+//        else if(list_vcc[vid].njump > 9) njump[9] ++;
+//        else                             njump[list_vcc[vid].njump] ++;
         
         list_vcc.erase(list_vcc.begin()+vid);
     }
     else{
 	    states[x][y][z]= 0;
-    	list_vcc[vid].ltcp= x*ny*nz + y*nz + z;
+    	list_vcc[vid].x= x;
+    	list_vcc[vid].y= y;
+    	list_vcc[vid].z= z;
     	if((x-xv)>nx/2) list_vcc[vid].ix --; if((x-xv)<-nx/2) list_vcc[vid].ix ++;
     	if((y-yv)>ny/2) list_vcc[vid].iy --; if((y-yv)<-ny/2) list_vcc[vid].iy ++;
     	if((z-zv)>nz/2) list_vcc[vid].iz --; if((z-zv)<-nz/2) list_vcc[vid].iz ++;
@@ -131,18 +131,18 @@ void class_events::actual_jumpV(int vid, int inbr){ // vcc id, neighbor ltcp and
 }
 
 void class_events::actual_jumpI(int iid, int inbr){
-    int xi= (int) (list_itl[iid].ltcp/nz)/ny; // itl position
-	int yi= (int) (list_itl[iid].ltcp/nz)%ny;
-	int zi= (int)  list_itl[iid].ltcp%nz;
+    int xi= list_itl[iid].x; // itl position
+	int yi= list_itl[iid].y;
+	int zi= list_itl[iid].z;
 	if(2!=states[xi][yi][zi] && 3!=states[xi][yi][zi]) error(2, "(actual_jumpI) the jumping itl is not an itl (type)", 1, states[xi][yi][zi]);
 
     int x, y, z;
-    if(2==states[xi][yi][zi]){
+    if(2==states[xi][yi][zi]){ // SIA jumps to 1st-nn
 	    x= pbc(xi+v1nbr[inbr][0], nx);
 	    y= pbc(yi+v1nbr[inbr][1], ny);
 	    z= pbc(zi+v1nbr[inbr][2], nz);
     }
-    else{
+    else{ // mixed itl jumps to 2nd-nn
 	    x= pbc(xi+v2nbr[inbr][0], nx);
 	    y= pbc(yi+v2nbr[inbr][1], ny);
 	    z= pbc(zi+v2nbr[inbr][2], nz);
@@ -153,9 +153,11 @@ void class_events::actual_jumpI(int iid, int inbr){
     else                        Ija[1] ++;
 	    
     states[x][y][z]= states[xi][yi][zi];
-    states[xi][yi][zi]= 1;
+    states[xi][yi][zi]= 1; // change if BB is included
 	
-	list_itl[iid].ltcp= x*ny*nz + y*nz + z;
+	list_itl[iid].x= x;
+	list_itl[iid].y= y;
+	list_itl[iid].z= z;
     list_itl[iid].dir=  inbr;
 //	    list_itl[iid].head= states[x][y][z] - jatom;
 	
@@ -173,29 +175,35 @@ void class_events::actual_jumpI(int iid, int inbr){
     if(trap_included && 3==states[x][y][z]) list_itl[iid].trapped= trap_check(x, y, z); // if trapping included, check if AB itl trapped
 }
 	
-void class_events::create_vcc(int altcp, int mltcp){
-	int ja= *(&states[0][0][0]+altcp);
+void class_events::create_vcc(int altcp, int mltcp){ // vcc created from srf
+	int xa= (int) (altcp/nz)/ny; // jumping atom
+    int ya= (int) (altcp/nz)%ny; 
+    int za= (int) altcp%nz;
+	int xm= (int) (mltcp/nz)/ny; // to the vacuum site
+    int ym= (int) (mltcp/nz)%ny; 
+    int zm= (int) mltcp%nz;
+	int ja= states[xa][ya][za];
     if(ja != 1 && ja != -1) error(2, "(create_vcc) an ja isnt 1 or -1", 1, ja);
+
+	// Update states
+	states[xm][ym][zm]= ja;
+	states[xa][ya][za]= 0;
 
     // initialize the vcc in the list_vcc
 	int vid= list_vcc.size();
 	list_vcc.push_back(vcc());
 	
-	list_vcc[vid].ltcp= altcp;
+	list_vcc[vid].x= xa;
+	list_vcc[vid].y= ya;
+	list_vcc[vid].z= za;
 	list_vcc[vid].ix= 0;
 	list_vcc[vid].iy= 0;
 	list_vcc[vid].iz= 0;
     list_vcc[vid].njump= 0;
 
-	// Update states
-	*(&states[0][0][0]+mltcp)= ja;
-	*(&states[0][0][0]+altcp)= 0;
-
     nV ++;
     nM --;
 
-	int xa= (int) (altcp/nz)/ny; int ya= (int) (altcp/nz)%ny; int za= (int) altcp%nz;
-	int xm= (int) (mltcp/nz)/ny; int ym= (int) (mltcp/nz)%ny; int zm= (int) mltcp%nz;
     srf_check(xa, ya, za);
     srf_check(xm, ym, zm);
     cvcc_rates += update_ratesC(altcp);

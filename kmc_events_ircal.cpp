@@ -13,10 +13,9 @@ double class_events::cal_ratesI(vector <int> &etype, vector <double> &rates, vec
 	for(int ii=0; ii < list_itl.size(); ii ++){ // ii: index of interstitial
 		if(list_itl[ii].trapped) continue; // if trapped; cant move; skip
         
-        int ltcp= list_itl[ii].ltcp;
-		int i= (int) (ltcp/nz)/ny;
-		int j= (int) (ltcp/nz)%ny;
-		int k= (int)  ltcp%nz;
+		int i= list_itl[ii].x;
+		int j= list_itl[ii].y;
+		int k= list_itl[ii].z;
 		int stateI= states[i][j][k]; // state of the itl
 
         if(2==stateI){

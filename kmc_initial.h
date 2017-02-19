@@ -37,7 +37,7 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "a");
 			    out_vdep= fopen(par_name_vdep, "a");
 			    out_sro = fopen(par_name_sro,  "a");
-			    out_msd = fopen(par_name_msd,  "a");
+//			    out_msd = fopen(par_name_msd,  "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
             }
 			else{
@@ -55,7 +55,7 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "w");
 			    out_vdep= fopen(par_name_vdep, "w");
 			    out_sro = fopen(par_name_sro,  "w");
-			    out_msd = fopen(par_name_msd,  "w");
+//			    out_msd = fopen(par_name_msd,  "w");
                 cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
@@ -66,8 +66,8 @@ class class_initial{
 		
 			sum_mag= 2*nAA + 1*nA -1*nB -2*nBB;
 
-			init_par();
-			init_uncorrH();
+			init_par(); // initialize Ising model parameters; see JPCM 2016 Huang et al
+//			init_uncorrH();
 		}
 		
 	private:
@@ -78,6 +78,6 @@ class class_initial{
 		void init_states_array(double compV, double compA, int nMlayer);
 		void read_restart(char name_restart[], long long int &ts_initial, double &time_initial);
 		void init_par();
-		void init_uncorrH();
+//		void init_uncorrH();
 };
 #endif // KMC_SYSTEM_INCLUDED

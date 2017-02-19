@@ -8,30 +8,30 @@
 using namespace std;
 
 void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv){ // execute the recombination: vcc or vacuum
-    if(-1==ii){
-        int ltcp= xi*ny*nz + yi*nz + zi;
+    if(-1==ii){ // if ii not know, search it
         for(int a=0; a<list_itl.size(); a ++) 
-            if(list_itl[a].ltcp==ltcp) ii= a;
+            if(list_itl[a].x==xi && list_itl[a].y==yi && list_itl[a].z==zi) ii= a;
         if(-1==ii) error(2, "(rules_recb) cant find the itl");
     }
     if(-1==iv && 0==states[xv][yv][zv]){
-        int ltcp= xv*ny*nz + yv*nz + zv;
         for(int a=0; a<list_vcc.size(); a ++)
-            if(list_vcc[a].ltcp==ltcp) iv= a;
+            if(list_vcc[a].x==xv && list_vcc[a].y==yv && list_vcc[a].z==zv) iv= a;
         if(-1==iv) error(2, "(rules_recb) cant find the vcc");
     }
 
-    if(-1==states[xv][yv][zv]){
+    if(-1==states[xv][yv][zv]){ // AA+B->A+AB
         if(states[xi][yi][zi] != 2) error(2, "(rules_recb) a recb with B atom not AA itl (type)", 1, states[xi][yi][zi]);
         nAA --; nB --;
         states[xi][yi][zi]= 1;
         states[xv][yv][zv]= 3;
         nAB ++; nA ++;
-        list_itl[ii].ltcp= xv*ny*nz+yv*nz+zv;
+        list_itl[ii].x= xv;
+        list_itl[ii].y= yv;
+        list_itl[ii].z= zv;
         recb_checki(ii);
     }
-    else{
-        if(4==states[xv][yv][zv]) nM --;
+    else{ // recb: I+V or I+M
+        if(4==states[xv][yv][zv]) nM --; 
         else if(0==states[xv][yv][zv]){
             nV --;
             list_vcc.erase(list_vcc.begin()+iv);
@@ -53,7 +53,7 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
 	            states[xi][yi][zi]=-1;
 	            states[xv][yv][zv]= 1;
                 e2= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
-                if(e1<e2){
+                if(e1<e2){ // comparing energy to decide whether A or B jumps to V
 	                states[xi][yi][zi]= 1;
 	                states[xv][yv][zv]=-1;
                 }
@@ -73,10 +73,9 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
 }
 
 bool class_events::recb_checki(int id){
-    int ltcp= list_itl[id].ltcp;
-    int i= (int) (ltcp/nz)/ny;
-	int j= (int) (ltcp/nz)%ny;
-	int k= (int)  ltcp%nz;
+    int i= list_itl[id].x;
+    int j= list_itl[id].y;
+    int k= list_itl[id].z;
     if(i==x_sink){ // check if at sink
         sink(false, id);
         return true;
@@ -85,7 +84,7 @@ bool class_events::recb_checki(int id){
     
     vector<vector<int>> list_recb;
     vector<vector<int>> list_AAtoAB;
-    double minE= 999999999;
+    double minE= 999999999; // if multiple cases, choose a minE case
     int x, y, z;
 	for(int a=0; a<n123nbr; a ++){ // check recb
         x= pbc(i+v123nbr[a][0], nx);
@@ -93,38 +92,8 @@ bool class_events::recb_checki(int id){
 		z= pbc(k+v123nbr[a][2], nz);
         if(0==states[x][y][z] || 4==states[x][y][z]){
             int stateV= states[x][y][z];
-            double e0, ediff;
-            switch(stateI){
-                case 2:
-                    e0= ecal_bond(x, y, z, i, j, k);
-                    states[i][j][k]= 1; states[x][y][z]= 1;
-                    ediff= ecal_bond(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    break;
-                case 3:
-                    e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
-                    
-                    states[i][j][k]=  1; states[x][y][z]= -1;
-                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    
-                    states[i][j][k]= -1; states[x][y][z]=  1;
-                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    break;
-            }
+            recb_check_ecal(true, minE, list_recb, i, j, k, stateI, x, y, z, stateV);
+            // minE, list_recb are references, change in the func
 
             states[i][j][k]= stateI;
             states[x][y][z]= stateV;
@@ -162,10 +131,9 @@ bool class_events::recb_checki(int id){
 }
 
 bool class_events::recb_checkv(int id){
-    int ltcp= list_vcc[id].ltcp;
-    int i= (int) (ltcp/nz)/ny;
-	int j= (int) (ltcp/nz)%ny;
-	int k= (int)  ltcp%nz;
+    int i= list_vcc[id].x;
+    int j= list_vcc[id].y;
+    int k= list_vcc[id].z;
     if(i==x_sink){ // check if at sink
         sink(true, id);
         return true;
@@ -182,38 +150,8 @@ bool class_events::recb_checkv(int id){
 
         if((2==states[x][y][z] || 3==states[x][y][z])){
             int stateI= states[x][y][z];
-            double e0, ediff;
-            switch(stateI){
-                case 2:
-                    e0= ecal_bond(x, y, z, i, j, k);
-                    states[i][j][k]= 1; states[x][y][z]= 1;
-                    ediff= ecal_bond(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    break;
-                case 3:
-                    e0= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k);
-                    
-                    states[i][j][k]=  1; states[x][y][z]= -1;
-                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    
-                    states[i][j][k]= -1; states[x][y][z]=  1;
-                    ediff= ecal_bond(x, y, z, i, j, k) + ecal_nonb(x, y, z, i, j, k) - e0;
-                    if(abs(ediff-minE)<1e-7) list_recb.push_back({x, y, z});
-                    else if((ediff-minE)<0){
-                        list_recb.clear(); list_recb.push_back({x, y, z});
-                        minE= ediff;
-                    }
-                    break;
-            }
+            recb_check_ecal(false, minE, list_recb, x, y, z, stateI, i, j, k, stateV);
+            // minE, list_recb are references, change in the func
 
             states[x][y][z]= stateI;
             states[i][j][k]= stateV;
@@ -234,6 +172,60 @@ bool class_events::recb_checkv(int id){
         return true;
     }
     else return false;
+}
+
+void class_events::recb_check_ecal(bool isitl, double& minE, vector<vector<int>>& list_recb, int xi, int yi, int zi, int stateI, int xv, int yv, int zv, int stateV){
+    double e0, ediff;
+    switch(stateI){ // perform image recb to cal ediff
+        case 2:
+            e0= ecal_bond(xi, yi, zi, xv, yv, zv);
+            states[xi][yi][zi]= 1; 
+            states[xv][yv][zv]= 1;
+            ediff= ecal_bond(xi, yi, zi, xv, yv, zv) - e0;
+            if(abs(ediff-minE)<1e-7){
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+            }
+            else if((ediff-minE)<0){
+                list_recb.clear();
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+                minE= ediff;
+            }
+                    
+            break;
+        case 3:
+            e0= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv);
+            states[xi][yi][zi]=  1; 
+            states[xv][yv][zv]= -1;
+            ediff= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv) - e0;
+            if(abs(ediff-minE)<1e-7){
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+            }
+            else if((ediff-minE)<0){
+                list_recb.clear();
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+                minE= ediff;
+            }
+            
+            states[xi][yi][zi]= -1; 
+            states[xv][yv][zv]=  1;
+            ediff= ecal_bond(xi, yi, zi, xv, yv, zv) + ecal_nonb(xi, yi, zi, xv, yv, zv) - e0;
+            if(abs(ediff-minE)<1e-7){
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+            }
+            else if((ediff-minE)<0){
+                list_recb.clear();
+                if(isitl)   list_recb.push_back({xv, yv, zv});
+                else        list_recb.push_back({xi, yi, zi});
+                minE= ediff;
+            }
+                    
+            break;
+    }
 }
 
 void class_events::srf_check(int i, int j, int k){ // when vacuum changed, check if srf array changes
@@ -267,49 +259,47 @@ void class_events::srf_check(int i, int j, int k){ // when vacuum changed, check
 }
 
 void class_events::sink(bool isvcc, int index){ // execute the sink
-	int ltcp;
+	int x, y, z;
 	double ran;
 	
 	if(isvcc){
 		nV --;
-		ltcp= list_vcc[index].ltcp;
+		x= list_vcc[index].x;
+		y= list_vcc[index].y;
+		z= list_vcc[index].z;
 		list_vcc.erase(list_vcc.begin()+index);
 
         ran= ran_generator();
-		if(list_sink.size() != 0){
+		if(list_sink.size() != 0){ // if atoms in sink, use them
             int i= (int) ( ran*list_sink.size() );
-			*(&states[0][0][0]+ltcp)= list_sink[i];
+			states[x][y][z]= list_sink[i];
             if(list_sink[i] != 1 && list_sink[i] != -1) error(2, "a atom from sink isnt atom", 1, list_sink[i]);
 			list_sink.erase(list_sink.begin()+i);
 		}
-		else *(&states[0][0][0]+ltcp)= (ran<par_compA) ? 1:-1;
+		else states[x][y][z]= (ran<par_compA) ? 1:-1;
 
-		if(1==*(&states[0][0][0]+ltcp)) nA ++;
-		else                            nB ++;
+		if(1==states[x][y][z])  nA ++;
+		else                    nB ++;
 	}
 	else{
-		ltcp= list_itl[index].ltcp;
+        x= list_itl[index].x;
+        y= list_itl[index].y;
+        z= list_itl[index].z;
 		list_itl.erase(list_itl.begin()+index);
 		
-		switch(*(&states[0][0][0]+ltcp)){
+		switch(states[x][y][z]){
 			case  2:
 				nAA --;
+				states[x][y][z]= 1; nA ++;
 				list_sink.push_back(1);
-				*(&states[0][0][0]+ltcp)= 1; nA ++;
 				break;
 			case  3:
 				nAB --;
-				ran= ran_generator();
-				if(ran>0.5){
-					list_sink.push_back(-1);
-					*(&states[0][0][0]+ltcp)= 1; nA ++;
-				}
-				else{
-					list_sink.push_back(1);
-					*(&states[0][0][0]+ltcp)=-1; nB ++;
-				}
+				states[x][y][z]= (ran_generator()>0.5) ? 1:-1;
+                if(1==states[x][y][z]){ nA ++; list_sink.push_back(-1);}
+                else                  { nB ++; list_sink.push_back( 1);}
 				break;
-			default: error(2, "(sink) an unknown type", 1, *(&states[0][0][0]+ltcp));
+			default: error(2, "(sink) an unknown type", 1, states[x][y][z]);
 		}
 	}
 }
@@ -317,7 +307,7 @@ void class_events::sink(bool isvcc, int index){ // execute the sink
 bool class_events::trap_check(int i, int j, int k){ // check if AB itl trapped
     if(states[i][j][k] != 3) error(2, "(trap_check) input not AB itl", 1, states[i][j][k]);
     if(! trap_included)      error(2, "(trap_check) trap_included not turn on");
-    if(temp>1000)            error(2, "(trap_check) T >1000k, should not trap", 1, temp);
+    if(temp>1000)            error(2, "(trap_check) T >1000k, should not trapped", 1, temp);
 
     for(int a= 0; a<n1nbr; a ++){
         int x= pbc(i+v1nbr[a][0], nx);

@@ -27,6 +27,9 @@ void class_initial::ltc_constructor(){
 	
     int   v2nbr_bcc[6][3]= {{ 0,  1,  1}, { 1,  0,  1}, { 1,  1,  0},
                             { 0, -1, -1}, {-1,  0, -1}, {-1, -1,  0}};
+    
+    int  v3nbr_bcc[12][3]= {{ 2, 1, 1}, { 1, 2, 1}, { 1, 1, 2}, { 1, 0,-1}, { 1,-1, 0}, {0, 1,-1},
+                            {-2,-1,-1}, {-1,-2,-1}, {-1,-1,-2}, {-1, 0, 1}, {-1, 1, 0}, {0,-1, 1}};
 
     int v1sp_bcc[8][6][3]= {{{ 0,-1,-1}, { 0,-1, 0}, { 0, 0,-1}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}},
                             {{-1, 0,-1}, {-1, 0, 0}, { 0, 0,-1}, {0, 1, 1}, {1, 1, 0}, {1, 1, 1}},
@@ -46,9 +49,6 @@ void class_initial::ltc_constructor(){
                             {{-1,-1,-2}, {-1, 0, 0}, { 0,-1, 0}, {0, 1,-1}, {1, 0,-1}, {1, 1, 1}},
                             {{-2,-1,-1}, {-1,-2,-1}, {-1,-1,-2}, {0, 0, 1}, {0, 1, 0}, {1, 0, 0}}};
 
-    int  v3nbr_bcc[12][3]= {{ 2, 1, 1}, { 1, 2, 1}, { 1, 1, 2}, { 1, 0,-1}, { 1,-1, 0}, {0, 1,-1},
-                            {-2,-1,-1}, {-1,-2,-1}, {-1,-1,-2}, {-1, 0, 1}, {-1, 1, 0}, {0,-1, 1}};
-    
     // FCC
 	double vbra_fcc[3][3]= {{0.5, 0.5, 0}, {0.5, 0, 0.5}, {0, 0.5, 0.5}};
 
@@ -59,8 +59,7 @@ void class_initial::ltc_constructor(){
                              {-1, -1,  1}, {-1,  1, -1}, { 1, -1, -1}};
 
 	// Choose ltc structure
-	if     (strcmp(type_ltc, "SC ")==0){}
-	else if(strcmp(type_ltc, "BCC")==0){
+	if(strcmp(type_ltc, "BCC")==0){
         ptr_vbra= vbra_bcc;	
         n1nbr= 8; ptr_v1nbr= v1nbr_bcc; 
         n2nbr= 6; ptr_v2nbr= v2nbr_bcc; 
@@ -68,20 +67,29 @@ void class_initial::ltc_constructor(){
         n1sp= 6; ptr_v1sp= &v1sp_bcc[0][0][0]; 
         n2sp= 6; ptr_v2sp= &v2sp_bcc[0][0][0];
     }
-	else if(strcmp(type_ltc, "FCC")==0){ptr_vbra= vbra_fcc; n1nbr=12; ptr_v1nbr= v1nbr_fcc; n2nbr= 6; ptr_v2nbr= v2nbr_fcc; 
-                                        error(2, "(FCC) add v3nbr, sp, and change N_NOCVCC, N_YESCVCC");}
-	else if(strcmp(type_ltc, "HCP")==0){}
+	else if(strcmp(type_ltc, "FCC")==0){
+        ptr_vbra= vbra_fcc; 
+        n1nbr=12; ptr_v1nbr= v1nbr_fcc; 
+        n2nbr= 6; ptr_v2nbr= v2nbr_fcc; 
+        error(1, "(FCC) add v3nbr, sp, and change N_NOCVCC, N_YESCVCC");
+    }
+    else if(strcmp(type_ltc, "SC ")==0) error(1, "(SC) need structures");
+	else if(strcmp(type_ltc, "HCP")==0) error(1, "(HCP) need structures");
 	else	error(1, "(ltc_constructor) coldn't match the lattice type", type_ltc);
 			
 	// assign array values
-	for(int i=0; i<3; i ++){     // Bravice vectors
-		for(int j=0; j<3; j ++){
+	for(int i=0; i<3; i ++)      // Bravice vectors
+		for(int j=0; j<3; j ++)
 			vbra[i][j]= (*(ptr_vbra+i))[j];
-	}}
+    
+    n12nbr=  n1nbr+n2nbr;
+    n123nbr= n1nbr+n2nbr+n3nbr;
 	for(int i=0; i<n1nbr; i ++){ // v1nbr
 		for(int j=0; j<3; j ++){
 			v1nbr[i][j]= (*(ptr_v1nbr+i))[j];
             if(i>=n1nbr/2) if(v1nbr[i][j] != -v1nbr[i-n1nbr/2][j]) error(1, "(ltc_constructor) v1nbr isn't symmetry");
+            v12nbr[i][j]= v1nbr[i][j];
+            v123nbr[i][j]= v1nbr[i][j];
 
             for(int k=0; k<n1sp; k ++) v1sp[i][k][j]= *(ptr_v1sp+i*n1sp*3+k*3+j);
             for(int k=0; k<n2sp; k ++) v2sp[i][k][j]= *(ptr_v2sp+i*n2sp*3+k*3+j);
@@ -91,28 +99,17 @@ void class_initial::ltc_constructor(){
 		for(int j=0; j<3; j ++){
 			v2nbr[i][j]= (*(ptr_v2nbr+i))[j];
             if(i>=n2nbr/2) if(v2nbr[i][j] != -v2nbr[i-n2nbr/2][j]) error(1, "(ltc_constructor) v2nbr isn't symmetry");
+            v12nbr[i+n1nbr][j]= v2nbr[i][j];
+            v123nbr[i+n1nbr][j]= v2nbr[i][j];
 		}
 	}
 	for(int i=0; i<n3nbr; i ++){ // v3nbr
 		for(int j=0; j<3; j ++){
 			v3nbr[i][j]= (*(ptr_v3nbr+i))[j];
             if(i>=n3nbr/2) if(v3nbr[i][j] != -v3nbr[i-n3nbr/2][j]) error(1, "(ltc_constructor) v3nbr isn't symmetry");
+            v123nbr[i+n1nbr+n2nbr][j]= v3nbr[i][j];
 		}
 	}
-            
-    // create v12nbr, v123nbr
-    n12nbr=  n1nbr+n2nbr;
-    n123nbr= n1nbr+n2nbr+n3nbr;
-	for(int a=0; a<n1nbr; a ++){ // 1st neighbors
-		v12nbr.push_back( { v1nbr[a][0], v1nbr[a][1], v1nbr[a][2] });
-		v123nbr.push_back({ v1nbr[a][0], v1nbr[a][1], v1nbr[a][2] });
-    }
-	for(int a=0; a<n2nbr; a ++){ // 2nd neighbors
-		v12nbr.push_back( { v2nbr[a][0], v2nbr[a][1], v2nbr[a][2] });
-		v123nbr.push_back({ v2nbr[a][0], v2nbr[a][1], v2nbr[a][2] });
-    }
-	for(int a=0; a<n3nbr; a ++) // 3rd neighbors
-		v123nbr.push_back({ v3nbr[a][0], v3nbr[a][1], v3nbr[a][2] });
 }
 
 void class_initial::init_states_array(double compV, double compA, int nMlayer){
@@ -127,7 +124,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
 	    for(int j=0; j<ny; j ++){	
 	        for(int k=0; k<nz; k ++){
                 srf[i][j][k]= false;
-                if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4;
+                if(i<nMlayer || i>(nx-nMlayer-1))   states[i][j][k]= 4; // vacuum layers
 		        else{
 			            double ran= ran_generator();
 
@@ -138,6 +135,7 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
     }}}
     if(is_1vcc){
         states[0][0][0]= par_typeD;
+        if(nMlayer != 0) error(1, "(init_states_array) nM != 0 & nV=1 is not allowed (vcc in vacuum)");
         cout << "compV gt 1: only 1 defect: " << par_typeD << endl;
     }
 
@@ -149,7 +147,9 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
 		        switch(states[i][j][k]){
                     case  0:
 			            list_vcc.push_back(vcc());
-			            list_vcc[nV].ltcp= i*ny*nz+j*nz+k;
+			            list_vcc[nV].x= i;
+			            list_vcc[nV].y= j;
+			            list_vcc[nV].z= k;
 			            list_vcc[nV].ix= 0;
 			            list_vcc[nV].iy= 0;
 			            list_vcc[nV].iz= 0;
@@ -170,7 +170,9 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
                         nM ++; break;
                     default: // itl
                         list_itl.push_back(itl());
-	                    list_itl.back().ltcp= i*ny*nz+j*nz+k; 
+	                    list_itl.back().x= i;
+	                    list_itl.back().y= j;
+	                    list_itl.back().z= k;
 	                    list_itl.back().dir= (int) (ran_generator()*n1nbr);
 	                    list_itl.back().head= 1; // choose the ltcp[0] because dir is randomly selected
 	                    list_itl.back().ix= 0; 
@@ -181,10 +183,8 @@ void class_initial::init_states_array(double compV, double compA, int nMlayer){
                         else                        nBB ++;
                 }
     }}}
-	if(compV>1 && nV != 1) error(1, "(init_states_array) The number of vacancies is not 1", 2, nV, compV); // delete
-#define TOL 0.01
 	int nAtotal= nA + nB;
-	if(abs((double) nA/nAtotal-compA) > TOL) error(1, "(init_states_array) the composition of generated conf is inconsistent of compA", 1, nA);
+	if(abs((double) nA/nAtotal-compA) > 0.01) error(1, "(init_states_array) the composition of generated conf is inconsistent of compA", 1, nA);
 	////////// CHECK //////////
 	
 	cout << "The random solution configuration has been generated!" << endl;
@@ -203,7 +203,6 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 
 	int ntotal;
 	if_re >> ntotal;
-//	if(ntotal != nx*ny*nz) error(1, "(read_restart) the input total ltc number isnt consistent", 2, ntotal, nx*ny*nz);
 	
 	char c_ltcp[5];
 	if_re >> c_ltcp >> timestep >> time;
@@ -211,58 +210,79 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 	ts_initial= timestep;
 	time_initial= time;
 
-    for(int i=0; i<nx*ny*nz; i++) *(&states[0][0][0]+i)= 1;
+    for(int i=0; i<nx; i++){
+        for(int j=0; j<ny; j++){
+            for(int k=0; k<nz; k++){
+                states[i][j][k]= 1;
+                srf[i][j][k]= false;
+    }}}
 
-	nV= 0; nA= nx*ny*nz; nB= 0; nAA= 0; nBB= 0; nAB= 0;
-	for(int index=0; index<ntotal; index ++){	
+	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0;
+	for(int index=0; index<ntotal; index ++){
+        // caution: conf file X contains A atoms
 		int type, i, j, k, is_srf, ix, iy, iz, dir, head;
-		if_re >> type >> i >> j >> k;
-//		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
-
-        int pid= i*ny*nz+j*nz+k;
-
-        *(&srf[0][0][0] + pid)= false;
 		
-        if( 0==type){
+        if_re >> type >> i >> j >> k;
+
+        if(1==type) continue;
+        else if(-1==type){
+		    if_re >> is_srf;
+            srf[i][j][k]= is_srf;
+            
+		    nB ++;
+        }
+        else if(4==type) nM ++;
+        else if(0==type){
 			if_re >> ix >> iy >> iz;
 			
 			list_vcc.push_back(vcc());
-			list_vcc[nV].ltcp= pid;
+			list_vcc[nV].x=   i;
+			list_vcc[nV].y=   j;
+			list_vcc[nV].z=   k;
 			list_vcc[nV].ix= ix;
 			list_vcc[nV].iy= iy;
 			list_vcc[nV].iz= iz;
 
 			nV ++;
 		}
-        else if(1==type || -1==type){
-		    if_re >> is_srf;
-            *(&srf[0][0][0]+pid)= is_srf;
-            
-            if( 1==type) nA ++;
-		    if(-1==type) nB ++;
-        }
-        else if ( 4==type) nM ++;
 		else{
 			if_re >> ix >> iy >> iz >> dir >> head;
 
 			list_itl.push_back(itl());
-			list_itl[nAA+nAB+nBB].ltcp= pid;
+			list_itl[nAA+nAB+nBB].x=   i;
+			list_itl[nAA+nAB+nBB].y=   j;
+			list_itl[nAA+nAB+nBB].z=   k;
 			list_itl[nAA+nAB+nBB].ix= ix;
 			list_itl[nAA+nAB+nBB].iy= iy;
 			list_itl[nAA+nAB+nBB].iz= iz;
 			list_itl[nAA+nAB+nBB].dir= dir;
 			list_itl[nAA+nAB+nBB].head= head;
 			
-			if	(type== 2) nAA ++;
-			else if (type==-2) nBB ++;
-			else if (type== 3) nAB ++;
+			if(2==type)         nAA ++;
+			else if (-2==type)  nBB ++;
+			else if ( 3==type)  nAB ++;
+            else error(1, "(read_restart) cant identify the type", 1, type);
 		}
 
-        nA --; // because nA=nx*ny*nz initially
-
-		*(&states[0][0][0] + pid)= type;
+		states[i][j][k]= type;
 	}
-	if(nV+nA+nB+nAA+nBB+nAB+nM != nx*ny*nz) error(1, "(read_restart) the number inconsistent", 2, nV+nA+nB+nAA+nBB+nAB+nM, nx*ny*nz);
+    nA= nx*ny*nz-nB-nV-nAA-nAB-nBB-nM;
+
+    for(int i=0; i<nx; i++){ // set up srf array
+        for(int j=0; j<ny; j++){
+            for(int k=0; k<nz; k++){
+                if(states[i][j][k] != 4) continue;
+
+                for(int a=0; a<n1nbr; a ++){ // mark srf atoms
+                    int x= pbc(i+v1nbr[a][0], nx);
+                    int y= pbc(j+v1nbr[a][1], ny);
+                    int z= pbc(k+v1nbr[a][2], nz);
+
+                    if(     states[x][y][z] == 0) error(1, "(init_states_array) vcc adjacent to vacuum");
+                    else if(states[x][y][z] != 4) srf[x][y][z]= true;
+                }
+    }}}
+
 
 	cout << "The configuration has been generated from the restart file!" << endl;
 	cout << "Vacancy: " << nV << endl;
@@ -275,8 +295,7 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 	if_re.close();
 }
 
-
-void class_initial::init_par(){
+void class_initial::init_par(){ // cal ABVI Ising model pars; see JPCM Huang et al.
 	// 1st-nn class 1
 	c1_44= ( (eAA1AA -8*eAA1A -8*eAA1B +12*eAA1AB +2*eAA1BB +12*eAB1BB -8*eA1BB -8*eB1BB +eBB1BB)
 	       -12*eAB1AB + (-48*eA1V +48*eV1V -48*eV1B) + (16*eA1A +32*eA1B +16*eB1B) )/576; 
@@ -437,6 +456,6 @@ void class_initial::init_par(){
 	printf("Vacuum \nCMM: %f, CMA: %f, CMV: %f, CMB: %f\n", c2_MM, c2_MA, c2_MV, c2_MB);
 
 	if(is_e2nbr) 	cout << "\n2nd nn parameters are non-zero" << endl;
-	else		cout << "\n2nd nn are 0, skip 2nd-nn calculations" << endl;
+	else            cout << "\n2nd nn are 0, skip 2nd-nn calculations" << endl;
 }
 

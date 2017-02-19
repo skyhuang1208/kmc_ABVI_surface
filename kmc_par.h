@@ -1,9 +1,10 @@
 #ifndef KMC_PAR_INCLUDED
 #define KMC_PAR_INCLUDED
 
-const char   par_ltc[4]=		"BCC";
+const char   par_ltc[4]=                "BCC";
 
-const int    par_nx=                       64; // 620 + 2*20
+// System
+const int    par_nx=                       64; // sizes in the 3-dimensions 
 const int    par_ny=                       64;
 const int    par_nz=                       64;
 const int    par_nMlayer=                   0;
@@ -12,21 +13,19 @@ const double par_compA =                 0.85;
 const double par_compV=                     0; // vcc; set >1.0 to get only 1 defect
 const double par_typeD=                     0; // if sinlge defect, what is the type of defect
 
-const double	    par_time=           100.0; // toal time (s)
-const double        time_conf=           10.0; // time that output a conf file for restart later
+// Simulation time parameters
+const double	    par_time=           100.0; // time: total
+const double        time_conf=           10.0; //       output conf 
 
-const long long int par_step=             5e9; // toal timestep (give a minus step to ignore this quiterior to end the simulation)
-const long long int step_log=	          1e5;
-const long long int step_conf=            5e8; // timestep that output a conf file for restart later
-const long long int step_out=	          1e6;
-const long long int step_his=             1e6;
+const long long int par_step=             1e7; // steps: toal (minus step with no limit for this)
+const long long int step_log=	          1e5; //        output log
+const long long int step_conf=            1e6; //        output conf
+const long long int step_out=	          1e5; //        compute properties
+const long long int step_his=             1e5; //        output history files
 
-const bool par_isrestart=		    false;
-const bool par_isOUTrestart=         true;
-
-const bool par_isnoflckr=		    false; // NO USE: use a straight jumps for cvcc (no flickering)
-const int  par_N_NFjumps=		        1; // NO USE: number of straight jumps (no flickering)
-const double par_NFratio=		        1; // NO USE: ratio for the cvcc to not flickering (no flickering)
+// Files
+const bool par_isrestart=		    false; // restart from restart file
+const bool par_isOUTrestart=         true; // output restart files
 
 const char   par_name_sol[20]=      "history.sol";
 const char   par_name_def[20]=      "history.def";
@@ -34,19 +33,20 @@ const char   par_name_srf[20]=      "history.srf";
 const char   par_name_engy[20]=      "out.energy";
 const char   par_name_vdep[20]=      "out.vdepth";
 const char   par_name_sro[20]=          "out.sro";
-const char   par_name_msd[20]=          "out.msd";
+//const char   par_name_msd[20]=          "out.msd";
 
 // Parameters for events
 const double par_dis_rec=     0.866*3; // recombination distance
-const bool   par_isgenr=         true;
-const double par_dpasm1=         1e-3;
+const bool   par_isgenr=         true; // whether F-P genr
+const double par_dpasm1=         1e-3; // dpa/s
 const bool   par_trap_included= false;
-const bool   par_iscaldsro=     false;
+const bool   par_iscaldsro=     false; // whether cal sro change
+const int    par_x_sink= (int) (par_nx/2); // the location of plane sink 
 
-// Ising model energy calculation parameters
+// Kinetic parameters 
 const double par_temp = 2100;
 const double par_beta= 1.0/par_temp/8.617332478e-5; // 1/kbT, units: eV, K
-const double par_corrfac=  2.93 - 0.00055*par_temp;
+const double par_corrfac=  2.93 - 0.00055*par_temp; // correlation factor for SIA
 
 const double par_muvA=			  6.46e+12; // vcc mu and Em
 const double par_muvB=			  6.46e+12;  
@@ -78,9 +78,8 @@ const double par_eSPB2B=               -0.4943;
 const double par_eSPB1V=                0.2902; // B-V
 const double par_eSPB2V=                0.0563;
 
-// bonding energy parameters
-// AB bond & ratio 2/1
-const double r21=                     0.421875;
+// Bonding energy parameters
+const double r21=                     0.421875; // ratio btw 1st-nn and 2nd-nn 
 
 const double e0A1B=                    -1.5090; // eA1B: e0AB + e1AB*XB
 const double e1A1B=                    -0.0219;
@@ -129,23 +128,24 @@ const double eM2A=                           0;
 const double eM2V=                           0;
 const double eM2B=                           0;
 
-
 // PARAMETERS THAT DON'T USE
+const double par_eSPA1M=                 0;
+const double par_eSPB1M=                 0;
+const double par_eSPA2M=                 0;
+const double par_eSPB2M=                 0;
 const double par_muiA=			         0; // parameters that is not using 
 const double par_muiB=			         0;  
 const double par_emiA=			         0; 
 const double par_emiB=			         0;
-const double par_erAB=                   0;
-const double par_erBB=                   0;
+
 const double par_emiBB=			         0; // !!! these three para only for Dubey, CMS 2015
 const double par_eciAAtAB=               0; // !!!
 const double par_eciABtAA=               0; // !!!
 const double par_eciABtBB=               0; // !!!
 const double par_eciBBtAB=               0; // !!!
-const double par_eSPA1M=                 0;
-const double par_eSPB1M=                 0;
-const double par_eSPA2M=                 0;
-const double par_eSPB2M=                 0;
+
+const double par_erAB=                   0;
+const double par_erBB=                   0;
 
 const double eV1B=                           0;
 const double eV2B=                           0;
@@ -162,3 +162,12 @@ const double eAB2BB=                         0;
 const double eBB1BB=                         0;
 const double eBB2BB=                         0;
 #endif // KMC_PAR_INCLUDED
+
+/*
+const char   par_name_msd[20]=          "out.msd";
+
+const bool par_isnoflckr=		    false; // NO USE: use a straight jumps for cvcc (no flickering)
+const int  par_N_NFjumps=		        1; // NO USE: number of straight jumps (no flickering)
+const double par_NFratio=		        1; // NO USE: ratio for the cvcc to not flickering (no flickering)
+*/
+

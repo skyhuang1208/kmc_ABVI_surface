@@ -11,9 +11,9 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 	if(nV != list_vcc.size()) error(2, "(cal_ratesV) vcc number inconsistent", 2, nV, list_vcc.size());
 
 	for(int ivcc=0; ivcc < nV; ivcc ++){
-		int i= (int) (list_vcc[ivcc].ltcp/nz)/ny;
-		int j= (int) (list_vcc[ivcc].ltcp/nz)%ny;
-		int k= (int)  list_vcc[ivcc].ltcp%nz;
+		int i= list_vcc[ivcc].x;
+		int j= list_vcc[ivcc].y;
+		int k= list_vcc[ivcc].z;
 
 		if(states[i][j][k] != 0) error(2, "(cal_ratesV) there's an non-vacancy in the vacancy list", 2, states[i][j][k], timestep);
 		
@@ -24,8 +24,7 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 		
 			if(1==states[x][y][z] || -1==states[x][y][z]){
                 double ediff;
-                if(srf[x][y][z]){
-//                    states[i][j][k]= 4;
+                if(srf[x][y][z]){ // when jump to srf atom, use ediff+em model
                     double e0= ecal_bond(i, j, k, x, y, z) + ecal_nonb(i, j, k, x, y, z);
                     states[i][j][k]= states[x][y][z];
                     states[x][y][z]= 0;
@@ -35,7 +34,7 @@ double class_events::cal_ratesVsp(vector <int> &etype, vector <double> &rates, v
 
                     ediff += (1==states[x][y][z]) ? emvA:emvB;
                 }
-                else{
+                else{ // otherwise, use esp-ei model
                     ediff= ecal_sp(states[x][y][z], a, i, j, k) - ecal_bond(i, j, k, x, y, z);
 
                     double e0_nonb= ecal_nonb(i, j, k, x, y, z); // non-broken e0
@@ -81,7 +80,7 @@ double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ 
         Nbonds1[stateA1+1][stateA2+1] ++;
     }
     
-    for(int a=0; a<n2sp; a ++){ // 1st SP nbrs
+    for(int a=0; a<n2sp; a ++){ // 2nd SP nbrs
 	    int x= pbc(i+v2sp[inbr][a][0], nx);
 		int y= pbc(j+v2sp[inbr][a][1], ny);
 		int z= pbc(k+v2sp[inbr][a][2], nz);

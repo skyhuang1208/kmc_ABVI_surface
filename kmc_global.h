@@ -12,27 +12,27 @@ extern double totaltime;
 
 // ltc variables
 #define MAX_NNBR 20
-extern int n1nbr, n2nbr, n3nbr;	// number of neighbors
-extern int v1nbr[MAX_NNBR][3];	// indexes vectors of 1st neighbors
-extern int v2nbr[MAX_NNBR][3];	// indexes vectors of 2nd neighbors
-extern int v3nbr[MAX_NNBR][3];	// indexes vectors of 3rd neighbors
-extern double vbra[3][3];	// coordinate vectors of bravice lattice
-extern int n1sp, n2sp;
-extern int v1sp[MAX_NNBR][MAX_NNBR][3]; // [index of jump nbr][index of sp nbr][xyz]
-extern int v2sp[MAX_NNBR][MAX_NNBR][3];
-extern int n12nbr, n123nbr;
-extern vector < vector<int> > v12nbr;
-extern vector < vector<int> > v123nbr;
+extern double vbra[3][3];               // coordinate vectors of bravice lattice
+extern int n1nbr, n2nbr, n3nbr;         // number of neighbors
+extern int v1nbr[MAX_NNBR][3];          // 1st-nn: indexes vectors
+extern int v2nbr[MAX_NNBR][3];          // 2nd-nn
+extern int v3nbr[MAX_NNBR][3];          // 3rd-nn
+extern int n1sp, n2sp;                  // saddle-point neighbors
+extern int v1sp[MAX_NNBR][MAX_NNBR][3]; // 1st-nn: [index of jump nbr][index of sp nbr][xyz]
+extern int v2sp[MAX_NNBR][MAX_NNBR][3]; // 2nd-nn
+extern int n12nbr, n123nbr;             // combine of neighbor vectors
+extern int v12nbr[MAX_NNBR*2][3];       // Append(1st-nn, 2nd-nn)
+extern int v123nbr[MAX_NNBR*3][3];      // Append(1st-nn, 2nd-nn, 3rd-nn)
 
 // System
 const int nx=  par_nx;
 const int ny=  par_ny;
 const int nz=  par_nz;
-const int x_sink= (int) (nx/2);
+const int x_sink= par_x_sink;
 extern int nA, nB, nV, nAA, nBB, nAB, nM;
 extern int sum_mag; // sum of magnitization; should be conserved
-extern int  states[nx][ny][nz];
-extern bool    srf[nx][ny][nz];
+extern vector <vector<vector<int>>> states;
+extern vector<vector<vector<bool>>> srf;
 
 // Files
 extern FILE * his_sol;		// history file of solute atoms
@@ -44,25 +44,25 @@ extern FILE * out_sro;		// out file of sro
 extern FILE * out_msd;		// out file of msd
 
 // Parameters for mechanisms
-const double dis_rec=       par_dis_rec; // recombination distance
-const bool   is_genr=       par_isgenr;
+const bool   is_genr=       par_isgenr;     // whether F-P is auto generated
+const double rate_genr=     par_dpasm1*(nx-2*par_nMlayer)*ny*nz; // F-P genr rate
+const double dis_rec=       par_dis_rec;    // recombination distance
+const double corrfac=       par_corrfac;    // correlation factor
+const bool   iscaldsro=     par_iscaldsro;  // whether cal sro change 
 const bool   trap_included= par_trap_included;
-const double rate_genr=     par_dpasm1*(nx-2*par_nMlayer)*ny*nz;
-const double corrfac=       par_corrfac;
-const bool   iscaldsro=     par_iscaldsro;
 
 // Defect lists
 struct vcc{ // information of an vacancy
     vcc(): njump(-1) {}	
     int njump;
-    int ltcp;
+    int x, y, z;
 	int ix, iy, iz;
 };
 struct itl{ // information of an interstitial
     itl(): trapped(false) {}
-	int ltcp;
 	int dir; // direction
 	int head; // the atom of the itl that in the front along the dir; useful for AB itl
+	int x, y, z;
 	int ix, iy, iz;
     bool trapped; // in some cases(low T) AB-itl trapped around B or AB, make it fixed
 };
@@ -70,14 +70,13 @@ extern vector <vcc> list_vcc;	// A list contains information of all vacancies
 extern vector <itl> list_itl;  	// A list contains information of all interstitials
 extern vector <int> list_sink;  // A list contains atoms in the sink
 
-extern int N_genr;
-extern int njump[10];
-extern long long int Vja[2], Ija[2];
-extern double init_sro;
-extern double acc_dsroV; // accumulative sro change from vcc
-extern double acc_dsroG; // accumulative sro change from genr
-extern double acc_dsroRi; // accumulative sro change from recb
-extern double acc_dsroRv; // accumulative sro change from recb
+extern int N_genr;          // N of generations
+extern int njump[10];       // for a vcc from srf, N jumps before X
+extern long long int Vja[2], Ija[2]; // count jump to atoms for V and I
+extern double acc_dsroV;    // vcc jump: accumulative sro change
+extern double acc_dsroG;    // genr:
+extern double acc_dsroRi;   // itl recb
+extern double acc_dsroRv;   // vcc recb
 
 // Migration parameters
 const double temp= par_temp; 
@@ -140,19 +139,19 @@ extern double unc2_44, unc2_43, unc2_42, unc2_41, unc2_33, unc2_32, unc2_31, unc
 extern bool is_e2nbr;
 
 // Global functions
-extern void error(int nexit, string errinfo, int nnum=0, double num1=0, double num2=0);
-extern void error(int nexit, string errinfo, char c[]);
-extern double ran_generator();
-extern int pbc(int x_, int nx_);
+void error(int nexit, string errinfo, int nnum=0, double num1=0, double num2=0);
+void error(int nexit, string errinfo, char c[]);
+double ran_generator();
+int pbc(int x_, int nx_); // periodic boundary condition
 void write_conf(int flag);
 void write_hissol();
 void write_hisdef();
 void write_metrohis();
 void write_rcvcc();
-void write_vdep(); // record how far created vcc go
+//void write_vdep(); // record how far created vcc go
 int cal_Bnbr(int N_Bnbr, int x, int y, int z);
 double cal_sro();
 double cal_msd();
-double cal_dsro(int xv, int yv, int zv, int xa, int ya, int za); // cal sro change during vcc jump
+//double cal_dsro(int xv, int yv, int zv, int xa, int ya, int za); // cal sro change during vcc jump
 
 #endif // KMC_GLOBAL_INCLUDED
