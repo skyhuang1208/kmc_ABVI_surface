@@ -25,13 +25,14 @@ extern int v2sp[MAX_NNBR][MAX_NNBR][3];
 const int nx=  par_nx;
 const int ny=  par_ny;
 const int nz=  par_nz;
-const int x_sink= (int) (nx*100);
-const int y_sink= (int) (ny*100);
-const int z_sink= (int) (nz*100);
+const int x_sink= 0;
+const int y_sink= 0;
+const int z_sink= 0;
 extern int nA, nB, nV, nAA, nBB, nAB, nM, nVD, nVs;
 extern int sum_mag; // sum of magnitization; should be conserved
 extern int  states[nx][ny][nz];
 extern bool    srf[nx][ny][nz];
+extern int nIrecb, nIsink;
 
 // Files
 extern FILE * his_sol;		// history file of solute atoms
@@ -40,6 +41,7 @@ extern FILE * his_srf;		// history file of surface atoms
 extern FILE * out_engy;		// out file for energy calculations
 extern FILE * out_vdep;		// out file for store how long created vcc go
 extern FILE * out_sro;		// out file of sro
+extern FILE * out_log;		// out file of log
 
 // Parameters for mechanisms
 const double dis_rec=   par_dis_rec; // recombination distance
@@ -56,6 +58,7 @@ struct vcc{ // information of an vacancy
     int ivoid;
 };
 struct itl{ // information of an interstitial; can declare a vector to store all interstitials
+    itl(): ix(0), iy(0), iz(0) {}	
 	int ltcp;
 	int dir; // direction
 	int head; // the atom of the itl that in the front along the dir; useful for AB itl
@@ -101,19 +104,15 @@ const double erBB= par_erBB;
 const double eSPA1A= par_eSPA1A;
 const double eSPA1B= par_eSPA1B;
 const double eSPA1V= par_eSPA1V;
-const double eSPA1M= par_eSPA1M;
 const double eSPB1A= par_eSPB1A;
 const double eSPB1B= par_eSPB1B;
 const double eSPB1V= par_eSPB1V;
-const double eSPB1M= par_eSPB1M;
 const double eSPA2A= par_eSPA2A;
 const double eSPA2B= par_eSPA2B;
 const double eSPA2V= par_eSPA2V;
-const double eSPA2M= par_eSPA2M;
 const double eSPB2A= par_eSPB2A;
 const double eSPB2B= par_eSPB2B;
 const double eSPB2V= par_eSPB2V;
-const double eSPB2M= par_eSPB2M;
 
 // Ising model energy constants
 extern double h0;
@@ -135,7 +134,7 @@ extern void error(int nexit, string errinfo, int nnum=0, double num1=0, double n
 extern void error(int nexit, string errinfo, char c[]);
 extern double ran_generator();
 extern int pbc(int x_, int nx_);
-void write_conf();
+void write_conf(int status);
 void write_hissol();
 void write_hisdef();
 void write_metrohis();

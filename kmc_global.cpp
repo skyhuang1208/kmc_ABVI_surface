@@ -27,6 +27,7 @@ int nA, nB, nV, nAA, nBB, nAB, nM, nVD, nVs;
 int sum_mag; // sum of magnitization; should be conserved
 int  states[nx][ny][nz];
 bool    srf[nx][ny][nz]= {false};
+int nIrecb= 0, nIsink= 0;
 
 FILE * his_sol;		// history file of solute atoms
 FILE * his_def;		// history file of defects
@@ -34,6 +35,7 @@ FILE * his_srf;		// history file of surface atoms
 FILE * out_engy;	// out file of energy calculations
 FILE * out_vdep;
 FILE * out_sro;
+FILE * out_log;
 
 vector <vcc> list_vcc;	 // A list containing information of all vacancies
 vector <itl> list_itl;   // A list containing information of all interstitials
@@ -115,7 +117,7 @@ int pbc(int x_, int nx_){ // Periodic Boundary Condition
 	else			return (x_ - nx_);
 }
 
-void write_conf(){
+void write_conf(int status){ // (status) 1:timestep; 2:time; 3:RESTART
 	ofstream of_xyz;
 	ofstream of_ltcp;
 	
@@ -124,10 +126,20 @@ void write_conf(){
 		of_xyz.open("t0.xyz");
 		of_ltcp.open("t0.ltcp");
 	}
+    else if(status==3){
+	    of_xyz.open("RESTART.xyz");
+	    of_ltcp.open("RESTART");
+    }
 	else{
 		char name_xyz[40], name_ltcp[40];
-		sprintf(name_xyz, "%lld", timestep);  strcat(name_xyz, ".xyz");
-		sprintf(name_ltcp, "%lld", timestep); strcat(name_ltcp, ".ltcp");
+		if(status==1){
+            sprintf(name_xyz, "%lld", timestep);  strcat(name_xyz, ".xyz");
+		    sprintf(name_ltcp, "%lld", timestep); strcat(name_ltcp, ".ltcp");
+        }
+        else{
+		    sprintf(name_xyz, "time%.2f.xyz", totaltime);
+		    sprintf(name_ltcp, "time%.2f.ltcp", totaltime);
+        }
 		
 		of_xyz.open(name_xyz);
 		of_ltcp.open(name_ltcp);
@@ -160,7 +172,7 @@ void write_conf(){
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << " " << endl;
 
 					of_ltcp << states[i][j][k] << " " << i << " " << j << " " << k << " " 
-						<< list_vcc[id].ix << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
+						<< list_vcc[id].ivoid << " " << list_vcc[id].iy << " " << list_vcc[id].iz << endl;
 				}
                 else if(4==states[i][j][k]){
 					of_xyz  << states[i][j][k] << " " << x << " " << y << " " << z << endl;

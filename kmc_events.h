@@ -13,7 +13,7 @@ class class_events{
 			cout << "##Generation parameters (rate_genr) " << rate_genr << " (damage/s)" << endl;
 			cout << "##Recombination parameters: 3rd nearest-neighbor distance (FIXED in SURFACE simulations) " << endl;
 		
-            // create v12nbr
+            // CREATE v12nbr & v123nbr 
 			for(int a=0; a<n1nbr; a ++){ // 1st neighbors
 			    v12nbr.push_back( { (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
 			    v123nbr.push_back({ (*(v1nbr+a))[0], (*(v1nbr+a))[1], (*(v1nbr+a))[2] });
@@ -27,12 +27,19 @@ class class_events{
             
             cvcc_rates= init_ratesC();
             N_nediff= 0;
-    
-            for(int i=0; i<list_vcc.size(); i++) recb_checkv(i);
-//            cout << "index type ivoid" << endl;
-//            for(int i=0; i<list_vcc.size(); i++){
- //               cout << i << " " << *(&states[0][0][0]+list_vcc[i].ltcp) << " " << list_vcc[i].ivoid << endl;
- //           }
+   
+            // CREATE CUMULATIVE PROBABILITY OF VSIZE
+            double sump= 0; // sum of prob
+            for(int i=1; i<=1+n1nbr; i ++){ // construct probability distribution of vsize
+                pVsize[i]= pow(i, -1.8); // EPL 2015: freq ~ 2.7/N^1.8
+                sump += pVsize[i];
+            }
+            cout << "# Cumulative prob of vsize" << endl;
+            for(int i=1; i<=1+n1nbr; i ++){
+                pVsize[i] = pVsize[i]/sump + pVsize[i-1]; // nor && acc
+                cout << "size=" << i << ": " << pVsize[i] << endl;
+            }
+            
         }
 		
         // variables
@@ -61,6 +68,9 @@ class class_events{
         // 1st-nn + 2nd-nn + 3rd-nn //
         int n123nbr= n1nbr + n2nbr + n3nbr;
         vector < vector<int> > v123nbr;
+
+        // cumulative prob of vcc size
+        double pVsize[30]={0};
         // ********************  VARIABLES  ******************** //
         
 		///// functions of energy calculation /////
@@ -90,12 +100,13 @@ class class_events{
 		
         ///// functions for recombination /////
         void rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv);
-        void rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv, bool attached);
+        bool rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv, bool attached);
         void coll_check(int ivd, int i, int j, int k);
         bool recb_checki(int id);
         bool recb_checkv(int id);
         void srf_check(int i, int j, int k);
         void sink(bool isvcc, int index); // execute the sink
+        void erase_vcc(int iv);
 };
 
 #endif // KMC_EVENTS_INCLUDED

@@ -101,91 +101,14 @@ void class_initial::ltc_constructor(){
 	}
 }
 
-void class_initial::init_states_array(double nvoid, double nvcc, int nMlayer){
-    for(int i=0; i<nx*ny*nz; i++) *(&states[0][0][0]+i)= 1;
-    
-    for(int i=1; i <= nvoid+nvcc; i ++){ // voids and vcc share the same loop
-        int x[3], y[3], z[3];
-		for(int j=1; j<= 10000; j ++){
-            bool isfound= true;
-            x[0]= (int) (ran_generator()*nx); // central atom of the void
-		    y[0]= (int) (ran_generator()*ny);
-		    z[0]= (int) (ran_generator()*nz);
+void class_initial::init_states_array(){
+    for(int i=0; i<nx*ny*nz; i ++) *(&states[0][0][0]+i)= 1;
 
-            int ran1= (int) (ran_generator()*n1nbr); // 2nd and 3rd
-            int ran2= (int) (ran_generator()*n1nbr);
-            if(ran1==ran2) isfound= false;
-			
-            x[1]= pbc(x[0]+v1nbr[ran1][0], nx); 
-            y[1]= pbc(y[0]+v1nbr[ran1][1], ny); 
-            z[1]= pbc(z[0]+v1nbr[ran1][2], nz);
-			x[2]= pbc(x[0]+v1nbr[ran2][0], nx); 
-            y[2]= pbc(y[0]+v1nbr[ran2][1], ny); 
-            z[2]= pbc(z[0]+v1nbr[ran2][2], nz);
+	nV= 0; nA= nx*ny*nz; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0; nVD= 0; nVs= 0;
 
-            for(int n=0; n<3; n++){ // check if void next to other void
-                if(0==states[x[n]][y[n]][z[n]] || 5==states[x[n]][y[n]][z[n]]) isfound= false;
-
-		        for(int a=0; a<n1nbr; a ++){
-			        int x1= pbc(x[n]+v1nbr[a][0], nx);
-			        int y1= pbc(y[n]+v1nbr[a][1], ny);
-			        int z1= pbc(z[n]+v1nbr[a][2], nz);
-                    if(5==states[x1][y1][z1]) isfound= false;
-                }
-
-                if(i > nvoid) break; // for single vcc check the first atom only
-            }
-
-            if(isfound) break; // if found then exit
-            if(j==10000) error(1, "(init_states_array) cant find a place to put void");
-        }
-            
-        if(i <= nvoid) list_void.push_back(vector<int>());
-        for(int n=0; n<3; n++){ // found locations, now build void or vcc  
-            int ltcp= x[n]*ny*nz + y[n]*nz + z[n];
-            list_vcc.push_back(vcc());
-			list_vcc.back().ltcp= ltcp;
-
-            if(i <= nvoid){ // void
-                states[x[n]][y[n]][z[n]]= 5;
-			    list_vcc.back().ivoid= list_void.size() -1;
-                list_void.back().push_back(list_vcc.size()-1);
-            }
-            else{ // vcc
-                states[x[0]][y[0]][z[0]]= 0;
-                list_vcc.back().ivoid= -1;
-                break;
-            }
-        }
-    }
-
-	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nM= 0; nVD= nvoid;
-	////////// CHECK //////////
-	for(int i=0; i<nx; i ++){ 
-	    for(int j=0; j<ny; j ++){ 
-	        for(int k=0; k<nz; k ++){
-		        switch(states[i][j][k]){
-                    case  5:
-                    case  0: nV ++; break;
-		            case  1: nA ++; break;
-                    case -1: nB ++; break;
-                    case  4:
-                        for(int a=0; a<n1nbr; a ++){ // mark srf atoms
-                            int x= pbc(i+v1nbr[a][0], nx);
-                            int y= pbc(j+v1nbr[a][1], ny);
-                            int z= pbc(k+v1nbr[a][2], nz);
-
-                            if(     states[x][y][z] == 0) error(1, "(init_states_array) vcc adjacent to vacuum");
-                            else if(states[x][y][z] != 4) srf[x][y][z]= true;
-                        } 
-                        nM ++; break;
-                    default: error(1, "(init_states_array) a state type is unrecognizable", 1, states[i][j][k]);
-	            }
-    }}}
-	
-	cout << "The random solution configuration has been generated!" << endl;
+	cout << "A lattice filled with A atoms has been generated!" << endl;
+    cout << "Void: " << nVD << endl;
 	cout << "Vacancy: " << nV << endl;
-    cout << "Vacuum:  " << nM << endl;
 	cout << "Atype A: " << nA << ", pct: " << 100* (double) nA/nA << "%" << endl;
 	cout << "Atype B: " << nB << ", pct: " << 100* (double) nB/nA << "%" << endl;
 }
@@ -207,22 +130,29 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 	ts_initial= timestep;
 	time_initial= time;
 
-	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0;
+    vector< vector<int> > void_temp(1000000); // open a huge array
+
+	nV= 0; nA= 0; nB= 0; nAA= 0; nBB= 0; nAB= 0; nVD= 0; nVs= 0;
 	for(int index=0; index<nx*ny*nz; index ++){	
-		int type, i, j, k, is_srf, ix, iy, iz, dir, head;
+		int type, i, j, k, is_srf, ivoid, ix, iy, iz, dir, head;
 		if_re >> type >> i >> j >> k;
 		if(index != i*ny*nz+j*nz+k) error(1, "(read_restart) the input index inconsistent");
 	
         *(&srf[0][0][0]+index)= false;
 		
-        if( 0==type){
-			if_re >> ix >> iy >> iz;
+        if( 0==type || 5==type){
+			if_re >> ivoid >> iy >> iz;
 			
 			list_vcc.push_back(vcc());
 			list_vcc[nV].ltcp= index;
-			list_vcc[nV].ix= ix;
+            list_vcc[nV].ix=  0; // ix, iy, iz not important
 			list_vcc[nV].iy= iy;
 			list_vcc[nV].iz= iz;
+
+            if(ivoid != -1) void_temp[ivoid].push_back(nV); // give .void value later
+            else          { list_vcc[nV].ivoid= -1; nVs ++; }
+
+            if(5==type && -1==ivoid) error(1, "(read_restart) an 5 type has -1 ivoid");
 
 			nV ++;
 		}
@@ -246,16 +176,31 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 			list_itl[nAA+nAB+nBB].head= head;
 			
 			if	(type== 2) nAA ++;
-			else if (type==-2) nBB ++;
-			else if (type== 3) nAB ++;
+			else(1, "(read_restart) an unknown input type", 1, type);
 		}
 
 		*(&states[0][0][0]+index)= type;
 	}
 	if(nV+nA+nB+nAA+nBB+nAB+nM != nx*ny*nz) error(1, "(read_restart) the number inconsistent", 2, nV+nA+nB+nAA+nBB+nAB+nM, nx*ny*nz);
 
+    for(int i=0; i<void_temp.size(); i++){ // build list_void
+        if(void_temp[i].size()==0) continue;
+
+        if(void_temp[i].size()>=3){
+            nVD ++;
+            list_void.push_back(vector<int>());
+            for(int j=0; j<void_temp[i].size(); j ++){
+                int iv= void_temp[i].at(j);
+                list_void.back().push_back(iv);
+                list_vcc[iv].ivoid= list_void.size()-1;
+            }
+        }
+        else error(1, "(read_restart) a non-zero void smaller than 3", 1, void_temp[i].size());
+    }
+
 	cout << "The configuration has been generated from the restart file!" << endl;
 	cout << "Vacancy: " << nV << endl;
+    cout << "void: " << nVD << ", single v: " << nVs << endl;
 	cout << "Atype A: " << nA << ", pct: " << 100* (double)nA / ntotal << "%" << endl;
 	cout << "Atype B: " << nB << ", pct: " << 100* (double)nB / ntotal << "%" << endl;
 	cout << " Itl AA: " << nAA << endl;

@@ -98,8 +98,8 @@ double class_events::ecal_sp(int stateA1, int inbr, int i, int j, int k) const{ 
         Nbonds2[stateA1+1][stateA2+1] ++;
     }
 
-    return Nbonds1[2][2]*eSPA1A + Nbonds1[2][1]*eSPA1V + Nbonds1[2][0]*eSPA1B + Nbonds1[2][5]*eSPA1M +
-           Nbonds1[0][2]*eSPB1A + Nbonds1[0][1]*eSPB1V + Nbonds1[0][0]*eSPB1B + Nbonds1[0][5]*eSPB1M +
-           Nbonds2[2][2]*eSPA2A + Nbonds2[2][1]*eSPA2V + Nbonds2[2][0]*eSPA2B + Nbonds2[2][5]*eSPA2M +
-           Nbonds2[0][2]*eSPB2A + Nbonds2[0][1]*eSPB2V + Nbonds2[0][0]*eSPB2B + Nbonds2[0][5]*eSPB2M;
+    return Nbonds1[2][2]*eSPA1A + Nbonds1[2][1]*eSPA1V + Nbonds1[2][0]*eSPA1B +
+           Nbonds1[0][2]*eSPB1A + Nbonds1[0][1]*eSPB1V + Nbonds1[0][0]*eSPB1B +
+           Nbonds2[2][2]*eSPA2A + Nbonds2[2][1]*eSPA2V + Nbonds2[2][0]*eSPA2B +
+           Nbonds2[0][2]*eSPB2A + Nbonds2[0][1]*eSPB2V + Nbonds2[0][0]*eSPB2B;
 }

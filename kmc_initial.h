@@ -37,14 +37,15 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "a");
 			    out_vdep= fopen(par_name_vdep, "a");
 			    out_sro = fopen(par_name_sro,  "a");
+			    out_log = fopen(par_name_log,  "a");
 				cout << "Open " << par_name_sol << " & " << par_name_def << " with append mode" << endl;
             }
 			else{
 				cout << "START FROM a random configuration..." << endl;
 				ts_bg= 0; time_bg= 0;
 				
-				init_states_array(par_nvoid, par_nvcc, par_nMlayer);
-				write_conf();
+				init_states_array();
+				write_conf(false);
 				cout << "Output t0 conf files" << endl;
 				
 			    his_sol = fopen(par_name_sol,  "w");
@@ -53,6 +54,7 @@ class class_initial{
 			    out_engy= fopen(par_name_engy, "w");
 			    out_vdep= fopen(par_name_vdep, "w");
 			    out_sro = fopen(par_name_sro,  "w");
+			    out_log = fopen(par_name_log,  "w");
                 cout << "Open " << par_name_sol << " & " << par_name_def << " with write mode" << endl;
 			}
 			if(NULL==his_sol)  error(2, "(class_events) the solute  history file was not opened!");
@@ -64,7 +66,7 @@ class class_initial{
 			sum_mag= 2*nAA + 1*nA -1*nB -2*nBB;
 
 			init_par();
-			init_uncorrH();
+//			init_uncorrH();
 		}
 		
 	private:
@@ -72,7 +74,7 @@ class class_initial{
 
 		// functions
 		void ltc_constructor();
-        void init_states_array(double nvoid, double nvcc, int nMlayer);
+        void init_states_array();
 		void read_restart(char name_restart[], long long int &ts_initial, double &time_initial);
 		void init_par();
 		void init_uncorrH();

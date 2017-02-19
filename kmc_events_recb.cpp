@@ -59,11 +59,7 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
         case 0:
             nV --;
             
-            for(int a= 0; a<list_void.size(); a++) // iv will be erased; id in void --
-                for(int b= 0; b<list_void[a].size(); b++)
-                    if(list_void.at(a).at(b)>iv) list_void.at(a).at(b) --;
-
-            list_vcc.erase(list_vcc.begin()+iv);
+            erase_vcc(iv); // when erase in list_vcc, list_void needs correction (-- if >iv)
             break;
         case 4: 
             nM --; break;
@@ -71,21 +67,15 @@ void class_events::rules_recb(int ii, int xi, int yi, int zi, int iv, int xv, in
     }
 
     double e1, e2;
+    nIrecb ++;
 	nAA --; nA +=2;
 	states[xi][yi][zi]= 1;
 	states[xv][yv][zv]= 1;
 			
 	list_itl.erase(list_itl.begin()+ii);
-    
-    if(nM !=0){
-        srf_check(xi, yi, zi);
-        srf_check(xv, yv, zv);
-        cvcc_rates += update_ratesC(xi*ny*nz+yi*nz+zi, true);
-        cvcc_rates += update_ratesC(xv*ny*nz+yv*nz+zv, true);
-    }
 }
 
-void class_events::rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv, bool attached){ // execute the recombination: vcc or vacuum
+bool class_events::rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, int yv, int zv, bool attached){ // execute the recombination: vcc or vacuum
     if(states[xi][yi][zi] != 5) error(2, "(rules_attach) not a void", 1, states[xi][yi][zi]); // check
     if(states[xv][yv][zv] != 0) error(2, "(rules_attach) not a vcc",  1, states[xv][yv][zv]);
 
@@ -99,39 +89,57 @@ void class_events::rules_attach(int ii, int xi, int yi, int zi, int iv, int xv, 
 
     if(attached) states[xv][yv][zv]= 5; // the vcc is right next to void
     else{
-	    for(int n=1; n<=500; n ++){ // choose ltcp to attach 
+        int bkup=-1; // if cant find it after n=501; use backup value
+	    int i, j, k;
+        for(int n=1; n<=501; n ++){ // choose ltcp to attach 
             int ran= (int) ( ran_generator()*n1nbr );
-            int i= pbc(xi+v1nbr[ran][0], nx); // random 1st-nn of void
-		    int j= pbc(yi+v1nbr[ran][1], ny);
-		    int k= pbc(zi+v1nbr[ran][2], nz);
+            i= pbc(xi+v1nbr[ran][0], nx); // random 1st-nn of void
+		    j= pbc(yi+v1nbr[ran][1], ny);
+		    k= pbc(zi+v1nbr[ran][2], nz);
 
+            if(n==501){ // if cant find any A that surrounded iv
+                if(-1==bkup){ // no A atom surrounded ii (?!)
+                    cout << " *** ATTACH FAIL *** ";
+                    return false;
+                }
+                else{
+                    cout << " *** FORCE ATTACH *** ";
+                    i= pbc(xi+v1nbr[bkup][0], nx);
+		            j= pbc(yi+v1nbr[bkup][1], ny);
+		            k= pbc(zi+v1nbr[bkup][2], nz);
+                    break;
+                }
+            }
+            
             if(states[i][j][k] != 1) continue;
+            bkup= ran;
 
             bool isFOUND= false;
 	        for(int a=0; a<n1nbr; a ++){ // check if ltcp 1st-nn of vcc
                 int x= pbc(xv+v1nbr[a][0], nx);
 		        int y= pbc(yv+v1nbr[a][1], ny);
 		        int z= pbc(zv+v1nbr[a][2], nz);
-                if(i==x && j==y && k==z){
-                    states[xv][yv][zv]= 1; // switch position
-                    states[i][j][k]=    5;
-                    list_vcc[iv].ltcp= i*ny*nz + j*nz + k;
-                    isFOUND= true;
-                    xv= i; yv= j; zv= k;
-                }
+                if(i==x && j==y && k==z) isFOUND= true;
             }
-    
             if(isFOUND) break;
-            if(n==500) error(2, "(rules_attach) cant find the place in a n=500 iteration");
         }
+        
+        states[xv][yv][zv]= 1; // switch position
+        states[i][j][k]=    5;
+        list_vcc[iv].ltcp= i*ny*nz + j*nz + k;
+        xv= i; yv= j; zv= k;
     }
 
     int ivd= list_vcc[ii].ivoid;
     list_void[ivd].push_back(iv);
     list_vcc[iv].ivoid= ivd;
     
+    int check= *(&states[0][0][0] + list_vcc[iv].ltcp);
+    if(check != 5) error(2, "(rules_attach) the attached vcc isnt 5", 1, check);
+
     bool isRECB= recb_checkv(iv);
     if(! isRECB) coll_check(ivd, xv, yv, zv); // collision check
+    return true;
 }
 
 void class_events::coll_check(int ivd, int i, int j, int k){ // collision check
@@ -151,13 +159,13 @@ void class_events::coll_check(int ivd, int i, int j, int k){ // collision check
     for(int a=0; a<list_coll.size(); a++){ // do collision, mix voids
         int ivd2= list_coll[a]; // ivd2 will mix to ivd
         if(-1==ivd2) error(2, "(coll_check) found a -1 in ID of list_void");
+        if(list_void[ivd2].size()!=0) nVD --;
         for(int b=0; b<list_void[ivd2].size(); b++){
             int iv= list_void[ivd2].at(b); // ID of list_vcc
             list_void[ivd].push_back(iv);
             list_vcc[iv].ivoid= ivd;
         }
         list_void[ivd2].clear();
-        nVD --;
     }
 }
 
@@ -230,8 +238,8 @@ bool class_events::recb_checkv(int id){
         x= list_attach[ia].at(0);
         y= list_attach[ia].at(1);
         z= list_attach[ia].at(2);
-        rules_attach(-1, x, y, z, id, i, j, k, attached); // voidID is unknown, give -1
-        return true;
+        bool is_attached= rules_attach(-1, x, y, z, id, i, j, k, attached); // voidID is unknown, give -1
+        return is_attached; // if fail to attach, return false
     }
     else return false;
 }
@@ -269,57 +277,46 @@ void class_events::srf_check(int i, int j, int k){ // when vacuum changed, check
 void class_events::sink(bool isvcc, int index){ // execute the sink
 	int ltcp;
 	double ran;
-	
+
 	if(isvcc){
 		nV --;
 		ltcp= list_vcc[index].ltcp;
 
-        for(int a= 0; a<list_void.size(); a++) // iv will be erased; id in void --
-            for(int b= 0; b<list_void[a].size(); b++)
-                if(list_void.at(a).at(b)>index) list_void.at(a).at(b) --;
-
-		list_vcc.erase(list_vcc.begin()+index);
+		if(5==*(&states[0][0][0]+ltcp)) cout << "  *** void at sink ***";
+        erase_vcc(index); // when erase in list_vcc, list_void needs correction (-- if >iv)
 
         ran= ran_generator();
-		if(list_sink.size() != 0){
-            int i= (int) ( ran*list_sink.size() );
-			*(&states[0][0][0]+ltcp)= list_sink[i];
-            if(list_sink[i] != 1 && list_sink[i] != -1) error(2, "a atom from sink isnt atom", 1, list_sink[i]);
-			list_sink.erase(list_sink.begin()+i);
-		}
-		else *(&states[0][0][0]+ltcp)= 1;
+		*(&states[0][0][0]+ltcp)= 1;
 
-		if(1==*(&states[0][0][0]+ltcp)) nA ++;
-		else                            nB ++;
+		nA ++;
 	}
 	else{
+        nIsink ++;
 		ltcp= list_itl[index].ltcp;
 		list_itl.erase(list_itl.begin()+index);
 		
-		switch(*(&states[0][0][0]+ltcp)){
-			case  2:
-				nAA --;
-				list_sink.push_back(1);
-				*(&states[0][0][0]+ltcp)= 1; nA ++;
-				break;
-			case  3:
-				nAB --;
-				ran= ran_generator();
-				if(ran>0.5){
-					list_sink.push_back(-1);
-					*(&states[0][0][0]+ltcp)= 1; nA ++;
-				}
-				else{
-					list_sink.push_back(1);
-					*(&states[0][0][0]+ltcp)=-1; nB ++;
-				}
-				break;
-			default: error(2, "(sink) an unknown type", 1, *(&states[0][0][0]+ltcp));
-		}
+		nAA --;
+		*(&states[0][0][0]+ltcp)= 1;
+        nA ++;
 	}
 }
+
+void class_events::erase_vcc(int iv){ // when erase iv, list_void needs correct
+    for(int a= 0; a<list_void.size(); a++){
+        for(int b= 0; b<list_void[a].size(); b++){
+            if     (list_void.at(a).at(b)==iv) list_void[a].erase(list_void[a].begin()+b);
+            else if(list_void.at(a).at(b) >iv) list_void[a].at(b) --; // iv deleted, minus 1
+    }}
+
+	list_vcc.erase(list_vcc.begin()+iv);
+}
+
+
+
+
 // THE functions that have been deleted. To find them please go to ABVI_fixSINK //
 // void class_events::recb_dir(int index){
 // bool class_events::cal_dis(int d1, int d2, int d3){
 // void class_events::recb_randomV(int index){
 // bool class_events::recb_randomI(int index){
+
