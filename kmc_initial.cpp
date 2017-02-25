@@ -224,12 +224,11 @@ void class_initial::read_restart(char name_restart[], long long int &ts_initial,
 		
         if_re >> type >> i >> j >> k;
 
-        if(1==type) continue;
-        else if(-1==type){
+        if(-1== type || 1==type){
 		    if_re >> is_srf;
             srf[i][j][k]= is_srf;
             
-		    nB ++;
+		    if(-1==type) nB ++;
         }
         else if(4==type) nM ++;
         else if(0==type){
